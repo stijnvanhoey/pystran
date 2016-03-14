@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from evaluationfunctions import Evaluation, Likelihood
 
 from sensitivity_base import SensitivityAnalysis
-from sensitivity_dynamic import dynamicSensitivity
+from sensitivity_dynamic import DynamicSensitivity
 from sensitivity_globaloat import GlobalOATSensitivity
 from sensitivity_morris import MorrisScreening
 from sensitivity_regression import SRCSensitivity
