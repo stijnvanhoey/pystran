@@ -1410,7 +1410,8 @@ class Likelihood(FlowAnalysis):
     Informal Likelihoods -> useful for GLUE and Bayesian based approaches
     all between 0.0 and 1.0
 
-    Todo: the GLUE combinations as done in the standard glue software
+    Todo: log-likelihood translation towards: 
+	transformation by: nll = lambda *args: -lnlike(*args)
 
     References
     --------------
@@ -1433,7 +1434,7 @@ class Likelihood(FlowAnalysis):
          print 'Criteria suited for Likihood maximization, use optim=True\
          to use in minimzation exercise; Not adviced to use in automated\
          minimalization algorithms, because of jumps between 0 and none\
-         zero values, use the evaluation class instead.'
+         zero values, use the evaluation class instead; use log version instead'
 
     def infodict(self):
         '''
@@ -1619,147 +1620,7 @@ class evalmodselection(FlowAnalysis):
 ##Modres Thomas
 #modreal = np.loadtxt(os.path.join('D:\Projecten\WL\VHM\Data','Modres_thomas_NAM_Cal_13aug_31dec05'))
 ##of = Evaluation(obsreal,modreal)
-#
-#################################################
-#EFKES VEUR DEN REVIEW VAN WATER SCIENCE
-#################################################
-#from plot_functions_rev import *
-#
-#testsize=1000
-#datasize=20
-#allsse = np.zeros(testsize)
-#allrmse = np.zeros(testsize)
-#allchisquare = np.zeros(testsize)
-#allabsdif = np.zeros(testsize)
-#allerrat =  np.zeros(testsize)
-#allchiab =  np.zeros(testsize)
-#
-#for i in range(testsize):
-#    obs = 2. * np.random.normal(loc=3.,scale=2.0,size=(datasize))
-#    mod = 2. * np.random.normal(loc=3.,scale=2.0,size=(datasize))
-##    obs = np.random.random(1000)
-##    mod = np.random.random(1000)
-#    res = obs-mod
-#    of = Evaluation(obs,mod)
-#    allsse[i] = np.sum(res**2)
-#    allrmse[i] = np.sqrt(np.sum(res**2))
-#    allchisquare[i] = np.sum((res**2)/obs)
-#    allabsdif[i] = np.sum(np.abs(res))
-#    allerrat[i] =  np.sum(np.where(obs<mod,obs/mod,mod/obs))
-#    allchiab[i] = np.sum(np.abs(res)/obs)
-#
 
-#fig = plt.figure()
-#axs = fig.add_subplot(211)
-#axs.scatter(allsse, allrmse, marker='o', facecolor='none',
-#                         edgecolor = 'k')
-#axs.set_xlabel('Least squares')
-#axs.set_ylabel('Sum of square roots')
-#
-#axs = fig.add_subplot(212)
-#axs.scatter(allsse, allchisquare, marker='o', facecolor='none',
-#                         edgecolor = 'k')
-#axs.set_xlabel('Least squares')
-#axs.set_ylabel('Chi square')
-#data1 = np.vstack((allsse,allrmse,allchisquare, allabsdif, allerrat, allchiab))
-#fig,axes = scatterplot_matrix(data1, data2 = False,
-#        linestyle='none', marker='o', color='black', mfc='none'
-#        , plothist = False, plottext=['Least Square','Sum of square roots',
-#                                      'Chi square', 'absolute difference',
-#                                      'error ratio', 'chi absolute'])
-
-#################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#TODO: verify possibilities with evaluating over different scale values (monthly means, yearly means,...) for differences between event and long term...
-#eg modelleren met dagelijkse tijdstap, kalibreren naar maandelijkse gemiddelden...
-
-
-##class CompareTest(objStat):
-##    '''
-##    yfu
-##
-##    '''
-##
-##    def __init__(self,Meas1,Model1,MeasComplex,ModelComplex,start_date=Period()[0],end_date=Period()[1],Msk=None):
-##        '''
-##        If Mask is used, the period between start and enddate must be the length of thiis mask!!
-##        '''
-##
-##        #Ophalen van de periode waar de data vandaan komt
-##        self.start_date=start_date   #Period(freqt='D',syear=2001,smonth=1,sday=1,eyear=2001,emonth=12,eday=31)
-##        self.end_date=end_date
-##
-##        #Error if input is not an numpy array that can be converted into a timeserie
-##        try:
-##            self.Meas1=ts.time_series(Meas1, start_date=self.start_date)
-##            self.MeasComplex=ts.time_series(Meas2, start_date=self.start_date)
-##        except TypeError:
-##            print "Given Measered input is not a valid numpy array"
-##        try:
-##            self.Model1=ts.time_series(Model1, start_date=self.start_date)
-##            self.ModelComplex=ts.time_series(Model2, start_date=self.start_date)
-##        except TypeError:
-##            print "Given Modeled input is not a valid numpy array"
-##
-##        self.Meas1=ts.TimeSeries.adjust_endpoints(self.Meas1, self.start_date, self.end_date)
-##        self.Meas2=ts.TimeSeries.adjust_endpoints(self.Meas2, self.start_date, self.end_date)
-##        self.Model1=ts.TimeSeries.adjust_endpoints(self.Model1, self.start_date, self.end_date)
-##        self.Model2=ts.TimeSeries.adjust_endpoints(self.Model2, self.start_date, self.end_date)
-##
-##        if Msk is not None:  #Opgelet! Compressen nadat de eindpunten zijn aangepast kan fouten geven!
-##            self.Meas1.mask=Msk
-##            self.Model1.mask=Msk
-##            self.Meas2.mask=Msk
-##            self.Model2.mask=Msk
-##            self.Meas1=self.Meas1.compressed()
-##            self.Model1=self.Model1.compressed()
-##            self.Meas2=self.Meas2.compressed()
-##            self.Model2=self.Model2.compressed()
-##            print size(Msk)
-##
-##            if (self.end_date - self.start_date)+1 <> size(Msk):
-##                raise Exception('Period of Mask is not conform the general period')
-##
-##        #Diff between Meas & Model
-##        self.Err1 = self.Meas1-self.Model1
-##        self.Err2 = self.Meas2-self.Model2
-##        self.SSE1= sum(self.Err1.data**2)
-##        self.SSE2= sum(self.Err2.data**2)
-##
-##    def FTest(self,nparSimpl,nparCompl):
-##        Tel = ((self.SSE1-SSE2)/(nparCompl-nparSimpl))
-##        Noem = self.SSE1/(self.Err1.data.size-nparCompl)
-##        F = Tel/Noem   #Zoek F-waarde automatisch via Npar en nr data
-##        return F
-##
-##
-##
-##
-##
-##
 
 
 ###Test objects
