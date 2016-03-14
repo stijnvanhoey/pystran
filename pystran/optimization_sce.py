@@ -1,12 +1,11 @@
 #-------------------------------------------------------------------------------
 # Name:        SCE_Python
-# Purpose:      find smallest value of criterium
+# Purpose:     find smallest value of criterium
 #
 # Author:      VHOEYS
 #
 # Created:     11/10/2011
 # Copyright:   (c) VHOEYS 2011
-# Licence:     <your licence>
 #-------------------------------------------------------------------------------
 #!/usr/bin/env python
 
@@ -17,23 +16,32 @@ import numpy as np
 from SCE_cceua import *
 
 #####################################################################
-def cceua(s,sf,bl,bu,icall,maxn,testcase=True,testnr=1,extra=[]):
-#  This is the subroutine for generating a new point in a simplex
-#
-#   s(.,.) = the sorted simplex in order of increasing function values
-#   s(.) = function values in increasing order
-#
-# LIST OF LOCAL VARIABLES
-#   sb(.) = the best point of the simplex
-#   sw(.) = the worst point of the simplex
-#   w2(.) = the second worst point of the simplex
-#   fw = function value of the worst point
-#   ce(.) = the centroid of the simplex excluding wo
-#   snew(.) = new point generated from the simplex
-#   iviol = flag indicating if constraints are violated
-#         = 1 , yes
-#         = 0 , no
+def cceua(s, sf, bl, bu, icall, maxn, 
+	  testcase=True,testnr=1, extra=[]):
+    """
+    This is the subroutine for generating a new point in a simplex
 
+    s(.,.) = the sorted simplex in order of increasing function values
+    s(.) = function values in increasing order
+
+    Attributes
+    -----------
+    sb(.) :
+      the best point of the simplex
+    sw(.) :
+      the worst point of the simplex
+    w2(.) : 
+      the second worst point of the simplex
+    fw : 
+      function value of the worst point
+    ce(.) :
+      the centroid of the simplex excluding wo
+    snew(.) :
+      new point generated from the simplex
+    iviol = flag indicating if constraints are violated
+	  = 1 , yes
+	  = 0 , no  
+    """
     nps,nopt=s.shape
     n = nps
     m = nopt
@@ -86,53 +94,69 @@ def cceua(s,sf,bl,bu,icall,maxn,testcase=True,testnr=1,extra=[]):
     # END OF CCE
     return snew,fnew,icall
 
-def sceua(x0,bl,bu,maxn,kstop,pcento,peps,ngs,iseed,iniflg,testcase=True,testnr=1,extra=[]):
+def sceua(x0, bl, bu, maxn, kstop, pcento, peps, ngs, iseed,
+	  iniflg, testcase=True, testnr=1, extra=[]):
+    """
+    This is the subroutine implementing the SCE algorithm,
+    written by Q.Duan, 9/2004
+    
+    Parameters
+    -----------
+    x0 : np.array 
+      the initial parameter array at the start; 
+      = the optimized parameter array at the end
+    f0 : float
+      the objective function value corresponding to the initial parameters
+      = the objective function value corresponding to the optimized parameters
+    bl : np.array
+      the lower bound of the parameters; 
+    bu : np.array
+      the upper bound of the parameters; 
+    iseed : int
+      the random seed number (for repetetive testing purpose)
+    iniflg : 
+      flag for initial parameter array (=1, included it in initial 
+      population; otherwise, not included)
+    ngs : int
+      number of complexes (sub-populations)
+    npg : int
+      number of members in a complex
+    nps : int
+      number of members in a simplex
+    nspl : int
+      number of evolution steps for each complex before shuffling
+    mings : int
+      minimum number of complexes required during the optimization process
+    maxn : int
+      maximum number of function evaluations allowed during optimization
+    kstop : int
+      maximum number of evolution loops before convergency
+    percento :
+      the percentage change allowed in kstop loops before convergency
 
-# This is the subroutine implementing the SCE algorithm,
-# written by Q.Duan, 9/2004
-#
-# Definition:
-#  x0 = the initial parameter array at the start; np.array
-#     = the optimized parameter array at the end;
-#  f0 = the objective function value corresponding to the initial parameters
-#     = the objective function value corresponding to the optimized parameters
-#  bl = the lower bound of the parameters; np.array
-#  bu = the upper bound of the parameters; np.array
-#  iseed = the random seed number (for repetetive testing purpose)
-#  iniflg = flag for initial parameter array (=1, included it in initial
-#           population; otherwise, not included)
-#  ngs = number of complexes (sub-populations)
-#  npg = number of members in a complex
-#  nps = number of members in a simplex
-#  nspl = number of evolution steps for each complex before shuffling
-#  mings = minimum number of complexes required during the optimization process
-#  maxn = maximum number of function evaluations allowed during optimization
-#  kstop = maximum number of evolution loops before convergency
-#  percento = the percentage change allowed in kstop loops before convergency
-
-# LIST OF LOCAL VARIABLES
-#    x(.,.) = coordinates of points in the population
-#    xf(.) = function values of x(.,.)
-#    xx(.) = coordinates of a single point in x
-#    cx(.,.) = coordinates of points in a complex
-#    cf(.) = function values of cx(.,.)
-#    s(.,.) = coordinates of points in the current simplex
-#    sf(.) = function values of s(.,.)
-#    bestx(.) = best point at current shuffling loop
-#    bestf = function value of bestx(.)
-#    worstx(.) = worst point at current shuffling loop
-#    worstf = function value of worstx(.)
-#    xnstd(.) = standard deviation of parameters in the population
-#    gnrng = normalized geometric mean of parameter ranges
-#    lcs(.) = indices locating position of s(.,.) in x(.,.)
-#    bound(.) = bound on ith variable being optimized
-#    ngs1 = number of complexes in current population
-#    ngs2 = number of complexes in last population
-#    iseed1 = current random seed
-#    criter(.) = vector containing the best criterion values of the last
-#                10 shuffling loops
-
-##    global BESTX,BESTF,ICALL,PX,PF
+    Attributes
+    -----------
+    x(.,.) : coordinates of points in the population
+    xf(.) : function values of x(.,.)
+    xx(.) : coordinates of a single point in x
+    cx(.,.) : coordinates of points in a complex
+    cf(.) : function values of cx(.,.)
+    s(.,.) : coordinates of points in the current simplex
+    sf(.) : function values of s(.,.)
+    bestx(.) : best point at current shuffling loop
+    bestf : function value of bestx(.)
+    worstx(.) : worst point at current shuffling loop
+    worstf : function value of worstx(.)
+    xnstd(.) : standard deviation of parameters in the population
+    gnrng : normalized geometric mean of parameter ranges
+    lcs(.) : indices locating position of s(.,.) in x(.,.)
+    bound(.) : bound on ith variable being optimized
+    ngs1 : number of complexes in current population
+    ngs2 : number of complexes in last population
+    iseed1 : current random seed
+    criter(.) : vector containing the best criterion values of the last 
+      10 shuffling loops  
+    """
 
     # Initialize SCE parameters:
     nopt=x0.size

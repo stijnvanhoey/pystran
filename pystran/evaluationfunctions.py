@@ -4,7 +4,6 @@
 development supported by Flemish Institute for Technological Research (VITO)
 """
 
-
 import os
 import numpy as np
 import pandas as pd
@@ -13,7 +12,7 @@ from scipy import stats
 #from utilities.FDC import *
 
 #if evaluation: minimization
-#If likelihood: maximization (openemn in RSA/GLUE/..)
+#If likelihood: maximization (openen in RSA/GLUE/..)
 
 class FlowAnalysis(object):
     '''
@@ -1612,23 +1611,3 @@ class evalmodselection(FlowAnalysis):
         '''
         objStat = (self.SSE()/self.residuals.size)*(1.+(2*self.npar/(self.residuals.size-self.npar)))
         return objStat
-
-#import os
-#import numpy as np
-
-#obsreal = np.loadtxt(os.path.join('D:\Projecten\WL\VHM\Data','Flow_Cal_Meas_13aug02_31dec05'))
-##Modres Thomas
-#modreal = np.loadtxt(os.path.join('D:\Projecten\WL\VHM\Data','Modres_thomas_NAM_Cal_13aug_31dec05'))
-##of = Evaluation(obsreal,modreal)
-
-
-
-###Test objects
-#obs=np.arange(0.0,10.,0.1)+np.random.random(100)
-#mod=np.arange(0.0,10.,0.1)+np.random.random(100)
-#of = Evaluation(obs,mod)
-#ofold = ObjFunct(obs,mod)
-#
-#
-#print ofold.NS()
-#print of.NSE()
