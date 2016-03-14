@@ -214,7 +214,7 @@ def scatterplot_matrix(data1, plottext=None, data2 = False, limin = False,
     if isinstance(data2, np.ndarray):
         databoth = True
 
-    #TODO: control for inputs
+    #TODO: control for dtypes inputs
 
     numvars, numdata = data1.shape
     fig, axes = plt.subplots(nrows=numvars, ncols=numvars, figsize=(40,40))
@@ -414,17 +414,6 @@ def scatterplot_matrix(data1, plottext=None, data2 = False, limin = False,
         axes[numvars-1,numvars-1].xaxis.set_minor_locator(minorLocator)
     return fig, axes
 
-
-#np.random.seed(1977)
-#numvars, numdata = 3, 1111
-#data1 = 5 * np.random.normal(loc=3.,scale=2.0,size=(numvars, numdata))
-#data2 = 50 * np.random.random((numvars, numdata))
-#fig,axes = scatterplot_matrix(data1, data2 = False,
-#        linestyle='none', marker='o', color='black', mfc='none',
-#        diffstyle1=[555,556], plothist = False, plottext=['A','B','C'])
-
-
-
 def Spread_diagram(axs,obs, mod, infobox = True, *args, **kwargs):
     '''
     Plot a scatter plot comparing the modelled and observed datasets in a
@@ -509,33 +498,6 @@ def Spread_diagram(axs,obs, mod, infobox = True, *args, **kwargs):
 
     return axs
 
-
-
-
-#obsreal = np.loadtxt(os.path.join('D:\Projecten\WL\VHM\Data','Flow_Cal_Meas_13aug02_31dec05'))
-#modreal = np.loadtxt(os.path.join('D:\Projecten\WL\VHM\Data','Modres_thomas_NAM_Cal_13aug_31dec05'))
-#
-##obs = 20*np.random.random(200)
-##mod = 0.8*obs + 2 * np.random.random(200) -1
-#obs = obsreal[1::80]
-#mod = modreal[1::80]
-
-#fig = plt.figure()
-#axs = fig.add_subplot(111)
-#axs = Spread_diagram(axs,obs, mod,infobox = True, marker='o', facecolor='none', edgecolor = 'g')
-#axs.set_xlabel(r'observed ($m^3 s^{-1}$)')
-#axs.set_ylabel(r'modelled ($m^3 s^{-1}$)')
-#plt.savefig('spread_diagram.pdf', bbox_inches='tight')
-
-#fig = plt.figure()
-#axs1 = fig.add_subplot(121)
-#axs2 = fig.add_subplot(122)
-#axs1 = Spread_diagram(axs1,obs, mod,infobox = True, marker='o', facecolor='none', edgecolor = 'r')
-#axs2 = Spread_diagram(axs2,obs, mod,infobox = True, marker='o', facecolor='none', edgecolor = 'g')
-#axs1.set_xlabel(r'observed ($m^3 s^{-1}$)')
-#axs2.set_ylabel(r'modelled ($m^3 s^{-1}$)')
-#plt.savefig('spread_diagram.pdf', bbox_inches='tight')
-
 ###############################
 ## Methods with outputs of parameter posterior distributions
 ###############################
@@ -590,8 +552,6 @@ def TornadoComparePar(axs, parval1, parval2, parnames, plotfreq = True,
                                 plotminmax=True,
                                 plotinfotext = 'Posterior distributions',
                                 bins=25,density=False)
-
-    Contact for information: Stijn Van Hoey
     '''
 
     hist, bin_edges = np.histogram(parval1, *args, **kwargs)
@@ -1158,8 +1118,6 @@ def Scatter_hist_withOF(data1, data2, data1b=False, data2b=False, xbinwidth = 0.
 
     return fig,axScatter,axHistx,axHisty,sc1
 
-
-
 ###############################
 ## Output sensitivity Analysis
 ###############################
@@ -1644,61 +1602,6 @@ def scatterwithtext(axs, xval, yval, names, *args, **kwargs):
 
     return axs, txtobjects
 
-#fig = plt.figure()
-#ax1 = fig.add_subplot(111)
-#ax1,detekst = scatterwithtext(ax1, np.array([-1.0,-1.0,2.0,2.05,0.2]), np.array([3.,3.02,1.,1.,5.0]),
-#                      [r'$X_1$',r'$X_2$',r'$X_3$',r'$X_4$',r'$X_5$'],'ks')
-#ax1.set_xlim((-2,3.))
-#ax1.set_ylim((0.0,7.))
-
-#def plot_multibar():
-#    '''
-#    '''
-#
-#    fig=plt.figure()
-#    fig.subplots_adjust(hspace=0.6)
-#    width = 0.25
-#    cnt=0
-#    for OFid in OFIDS:
-#        print cnt
-#        print abc[cnt]
-#        print OFid
-#        ax = fig.add_subplot(3,1,cnt+1)
-#        ax.text(1.03,0.95, abc[cnt], transform=ax.transAxes, fontsize=14) #verticalalignment='top'
-#
-#        OFout=np.load('OF_Morris_all'+st+'Morris1.npy')
-#        SAmeas_out, SensNS = Morris_Measure_Groups(18, Sample, Factsch, OFout[:,OFid], p=4, Group=[])
-#
-#        ind = np.arange(SensNS.shape[0])
-#        ax.bar(ind, SensNS[:,0],width,color='0.4')
-#
-#        ind = np.arange(SensNS.shape[0])+width
-#        ax.bar(ind, SensNS[:,1],width,color='k')
-#
-#        ind = np.arange(SensNS.shape[0])+2*width
-#        ax.bar(ind, SensNS[:,2],width,color='0.8')
-#
-##        ax.set_title(OFNAMES[cnt-1])
-#        ax.set_title(OFNAMES[cnt])
-#
-#    #    ax.set_ylabel(r'$\mu$*')
-#        ax.set_ylabel(r'Sens')
-#
-#        ax.set_xticks(ind-width/2)
-#        ax.set_xticklabels(parnames)
-#
-#        majorLocator = LinearLocator(5)
-#        if cnt==1:
-#            majorLocator =MultipleLocator(base=5.0)
-#        ax.yaxis.set_major_locator(majorLocator)
-#
-#
-#
-#        cnt+=1
-
-
-
-
 def plot_evolution(values, names, labell = -0.06, *args, **kwargs):
     '''
     Plot the evolution of the different values, with in the rows the
@@ -1761,11 +1664,6 @@ def plot_evolution(values, names, labell = -0.06, *args, **kwargs):
 
     return fig,axes
 
-#values=np.random.random((1000,5))
-#names=['par1','par2','par3','par4','par5']
-#plot_evolution(values, names,c='k')
-
-
 def interactionplot(values, names, lwidth = 2.):
     '''
     2D plot of intactive terms between a set of N factors
@@ -1825,17 +1723,6 @@ def interactionplot(values, names, lwidth = 2.):
     line = mlines.Line2D([0.,nsize], [0.,nsize],c='k',lw=lwidth)
     ax1.add_line(line)
     return fig, ax1
-
-#facs = 5
-#values = np.zeros((facs,facs))
-#for i in range(facs):
-#    for j in range(i+1,facs):
-#        values[i,j] = np.random.random()
-#names = [r'$X_1$',r'$X_2$',r'$X_3$',r'$X_4$',r'$X_5$']
-#fig, ax1 = interactionplot(values, names, lwidth = 2.)
-#ax1.text(0.1,0.9,r'$ST_{ij}$', transform = ax1.transAxes, fontsize=35,
-#         verticalalignment = 'top', horizontalalignment = 'left')
-
 
 ###############################
 ## Climate/Timerie Visualisation
@@ -1948,12 +1835,9 @@ def PolarYear(axs, data, tticks, tickspos = 1, ticksrounder = -1,
 
     return axs
 
-
-
 ###############################
 ## Others
 ###############################
-
 
 def Hist_withfit(axs, data, NormalFit=False, addinfo = False,
                  *args, **kwargs):
@@ -2103,5 +1987,3 @@ def Contour_ofspace(axs, Z, xmin, xmax, ymin, ymax, NumberLines=6,
         plt.colorbar(im, orientation='horizontal', shrink=0.8)
 
     return axs
-
-
