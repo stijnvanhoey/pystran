@@ -1,5 +1,5 @@
-# pySTAN
-Toolset of dynamical model STructure ANalysis algorithms
+# pystran
+Toolset of dynamical model STRucture ANalysis algorithms
 
 ## Remark
 
