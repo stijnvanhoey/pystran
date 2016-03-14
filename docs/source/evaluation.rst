@@ -4,5 +4,5 @@ Evaluation Criteria
 Objective functions
 -------------------------
 
-.. autoclass:: pySTAN.Evaluation
+.. autoclass:: pystran.Evaluation
 	:members:

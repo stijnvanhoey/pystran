@@ -1,9 +1,9 @@
 Model Parameters
 ================
  
-.. autoclass:: pySTAN.ModPar
+.. autoclass:: pystran.ModPar
    :members:
    
-.. autofunction:: pySTAN.reScale 
+.. autofunction:: pystran.reScale 
 
-.. autofunction:: pySTAN.Sobol
+.. autofunction:: pystran.Sobol
