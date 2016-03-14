@@ -4,7 +4,6 @@
 development supported by Flemish Institute for Technological Research (VITO)
 """
 
-
 import os
 import numpy as np
 import numpy.ma as ma
@@ -233,9 +232,7 @@ class RegionalSensitivity(SensitivityAnalysis):
 
         return [InputPar_Behav,output_Behav]
 
-
-#PLOT VOOR PIETER OPNEMEN
-    
+   
 
 
 #ai=[78, 12, 0.5, 2, 97, 33]

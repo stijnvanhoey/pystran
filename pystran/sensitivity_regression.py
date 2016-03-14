@@ -268,7 +268,6 @@ class SRCSensitivity(SensitivityAnalysis):
         for i in range(output.shape[1]):
             print '--------------------------'
             print 'Working on column ',i,'...'
-            #ATTENTION NOT JUST LINEAR REGRESSION OF ALL THE SCATTER PLOTS, BUT A COMBINED REGRESSION WITH THE LEAST SQUARE
             #the res is the sum(res**2) value; functional for covariance calculation
             self.SRC[:,i], res, rank, s = np.linalg.lstsq(self.parscaled,self.outputscaled[:,i])
             if rankbased == True:
@@ -472,7 +471,6 @@ class SRCSensitivity(SensitivityAnalysis):
         -----------
         outputnames : list of strings
             The names of the outputs in the colomns
-            TODO: link with evaluation-class to put outputnames automatically
         rank : boolean
             if rank is True, rankings or plotted in tabel instead of the 
             SRC values
@@ -517,7 +515,6 @@ class SRCSensitivity(SensitivityAnalysis):
         -----------
         outputnames : list of strings
             The names of the outputs in the colomns
-            TODO: link with evaluation-class to put outputnames automatically
         rank : boolean
             if rank is True, rankings or plotted in tabel instead of the 
             SRC values            
@@ -550,6 +547,8 @@ class SRCSensitivity(SensitivityAnalysis):
             fout.write('%s %s \n' %(self._parmap[i],nstring))                                            
         fout.close()
         print 'txt Results file saved in directory %s'%os.getcwd()
+
+
 
 #LINALG MODEL
 #ai=np.array([78, 12, 0.5, 2, 97, 33])

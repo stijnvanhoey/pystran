@@ -3,15 +3,6 @@
 Created on Mon Mar 11 11:55:05 2013
 
 @author: VHOEYS
-
-ALTERNATIVE DYNIA APPROACH
-
-Local sensitivity analysis (time based information)
-combined with the global sensitivity (LH-sampled parameters)
-plotted in distributions over time (cfr. DYNIA)
-plots need to be checked for most useful
-(+ summarized information from griensven-based sensitivity analysis)
-
 """
 
 import numpy as np
@@ -27,7 +18,7 @@ from matplotlib import colors
 class GlobalOATSensitivity(SensitivityAnalysis):
     '''
     A merged apporach of sensitivity analysis;
-    also extende version of the LH-OAT approach
+    also extended version of the LH-OAT approach
     
     Parameters
     -----------
@@ -189,7 +180,6 @@ class GlobalOATSensitivity(SensitivityAnalysis):
         else:
             raise Exception('Only Sobol and Latin HYpercube sampling is provided to ensure optimal coverage of the parameter space')
 
-
         #Extend to calculate the central relative sensitivity
         #1.convert value to value+pertfactor*value; 2. add a value-pertfactor*value
         self.perturbation_factor = perturbation_factor
@@ -271,7 +261,6 @@ class GlobalOATSensitivity(SensitivityAnalysis):
                     self.PE[i*self._ndim+j,:] = np.abs((100.*(output[i*self._ndim*2+j*2,:]-output[i*self._ndim*2+j*2+1,:])/((output[i*self._ndim*2+j*2,:]+output[i*self._ndim*2+j*2+1,:])/2.))/self.perturbation_factor)
         
         elif self.numerical_approach=='single':    
-            #TODO
             for i in range(self.nbaseruns):
                 for j in range(self._ndim):
                     self.CAS[i*self._ndim+j,:] = (output[i*(self._ndim+1)+j+1,:]-output[i*(self._ndim+1)+j,:])/(self.perturbation_factor*self.baseruns[i,j])
@@ -321,8 +310,7 @@ class GlobalOATSensitivity(SensitivityAnalysis):
 
         Notes
         ------
-        TODO make a datafram of pandas as output: rows is par, cols is output
-        TODO: couple with output library, so can be picked by dictionary
+        TODO make a dataframe of pandas as output: rows is par, cols is output
         '''
         
         RANK = np.argsort(-self.PE_SENS,axis=0)
@@ -371,7 +359,6 @@ class GlobalOATSensitivity(SensitivityAnalysis):
         -----------
         outputnames : list of strings
             The names of the outputs in the colomns
-            TODO: link with evaluation-class to put outputnames automatically
         name : str.tex
             output file name; use .tex extension in the name
         '''
@@ -400,7 +387,7 @@ class GlobalOATSensitivity(SensitivityAnalysis):
         print 'Latex Results latex table file saved in directory %s'%os.getcwd()        
 
 
-    def txtresults(self, outputnames, name = 'GlobalOATresults.txt'):
+    def txtresults(self, outputnames, name='GlobalOATresults.txt'):
         '''
         Results rankmatrix in txt file to load in eg excel
         
@@ -408,13 +395,9 @@ class GlobalOATSensitivity(SensitivityAnalysis):
         -----------
         outputnames : list of strings
             The names of the outputs in the colomns
-            TODO: link with evaluation-class to put outputnames automatically
         name : str.txt
             output file name; use .txt extension in the name 
         
-        Notes
-        ------
-        TODO: add the overall_importance in the output
         '''       
             
         fout = open(name,'w')
@@ -492,13 +475,9 @@ class GlobalOATSensitivity(SensitivityAnalysis):
         ------------
         outputnames : list of strings
             The names of the outputs in the colomns
-            TODO: link with evaluation-class to put outputnames automatically
         fontsize: int
             size of the numbers of the ranking
 
-        Notes
-        ------
-        TODO: add the overall_importance in the output
         '''
         
         if len(outputnames) > 20.:
@@ -544,7 +523,9 @@ class GlobalOATSensitivity(SensitivityAnalysis):
         
         return fig,ax1
 
-#####EXAMPLE WITH MULTIPLE OUTPUTS
+# ------------------------------
+# EXAMPLE WITH MULTIPLE OUTPUTS
+# ------------------------------
 #ai_or=np.array([78, 12, 0.5, 2, 97, 33])
 #ai=np.array([78, 12, 0.5, 2, 97, 33])
 #ai=ai.reshape((6,1))
@@ -579,8 +560,6 @@ class GlobalOATSensitivity(SensitivityAnalysis):
 ####matshow
 #outputnames=['o1','o2','o3','o4','o5','o6','o7','o8','o9','o10','o11']
 #test.plot_rankmatrix(outputnames)
-
-
 
 
 #for dynamic classes

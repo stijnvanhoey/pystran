@@ -14,19 +14,12 @@ from latextablegenerator import *
 from plot_functions_rev import plotbar
 from matplotlib import colors
 
-#!!!!
-##PAPER van Reusser op te nemen als opstelfiguur:
-#1. sensitiviteits voor elke tijdstap (sobol)
-#dan subplot met intensiteit van variantie van elke parameter in grijswaarden
-##http://onlinelibrary.wiley.com/doi/10.1029/2010WR009946/pdf
 
-#DAN DUS DYNIA VOOR PARSEVOLUTIE + SOBOL PER TIJDSTAP 
-
-class dynamicSensitivity(SensitivityAnalysis):
+class DynamicSensitivity(SensitivityAnalysis):
     '''
-    DYNIA approach and alternatives
+    DYNIA approach 
 
-    
+  
     Parameters
     -----------
     ParsIn : list
@@ -77,9 +70,6 @@ class dynamicSensitivity(SensitivityAnalysis):
 
         self.LB = np.array([el[0] for el in self.ParsIn])
         self.UB = np.array([el[1] for el in self.ParsIn])
-
-
-
 
 
 #    def timeserie_visualisation():

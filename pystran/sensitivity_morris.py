@@ -854,8 +854,6 @@ class MorrisScreening(SensitivityAnalysis):
             teh output to use when evaluation for multiple outputs are calculated
         name : str.tex
             output file name; use .tex extension in the name
-
-        TODO : tabel format that is more generic
         '''
         print 'tex: The %d th output evaluation criterion is used'%(outputid+1)
 
@@ -1190,7 +1188,6 @@ class MorrisScreening(SensitivityAnalysis):
 #    ax.set_xticks(ind+width/2)
 #    if len(factornames)>0:
 #        ax.set_xticklabels( factornames )
-
 
 ##2##
 #Xi = [(0.0,6.0,r'$X_1$'),(0.2,0.8,r'$X_2$'),(0.0,1.0,r'$X_3$'),(0.0,1.0,r'$X_4$'),

@@ -13,7 +13,7 @@ from extrafunctions import *
 from latextablegenerator import *
 from plot_functions_rev import plotbar, interactionplot, plot_evolution
 
-#(TODO: do sobol for multiple outputs, iterating the post)
+#(enhancement: do sobol for multiple outputs, iterating the post)
 class SobolVariance(SensitivityAnalysis):
     '''
     Sobol Sensitivity Analysis Variance Based
@@ -71,7 +71,6 @@ class SobolVariance(SensitivityAnalysis):
         Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano Tarantola. 
         Global Sensitivity Analysis, The Primer. John Wiley & Sons Ltd, 2008.
         
-    
     '''
     
     def __init__(self, parsin, ModelType = 'pyFUSE'):
@@ -505,8 +504,6 @@ class SobolVariance(SensitivityAnalysis):
         -----------
         name : str.tex
             output file name; use .tex extension in the name
-
-        TODO: tabel format that is more ageneric
         '''
         if self.repl > 1:
             print 'Table generates only output of first line!'

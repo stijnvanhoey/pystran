@@ -43,9 +43,9 @@ class SensitivityAnalysis(object):
 
     def __init__(self, parsin):
         '''
-        Check if all uniform distribution => TODO ! if all -> sobol sampling
+        Check if all uniform distribution => ! if all -> sobol sampling
         is possible, else, only uniform and normal distribution are supported
-        for using the sobol sampling... Here is still work to do!!
+        for using the sobol sampling... 
         '''
 
         if  isinstance(parsin, dict): #bridge with pyFUSE!
@@ -95,7 +95,6 @@ class SensitivityAnalysis(object):
                                         "not correct,"
                                         "choose ModPar instance or "
                                         "list of (min,max)-tuples")
-
 
         self._ndim = len(parsin)
 
@@ -159,9 +158,6 @@ class SensitivityAnalysis(object):
         The link with an output variable is not explicitly included and can be
         applied by the ObjFunc intance of user-defined. All outputs are available
         in the hdf5 to work with.
-
-        TODO: control the used parameters and the needed for framework;
-        yet no conrol added to compare parmaps
 
         Parameters
         ------------

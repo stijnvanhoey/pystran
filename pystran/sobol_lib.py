@@ -1,6 +1,9 @@
 '''
 SOBOL SEQUENCES AND SAMPLING
 http://people.sc.fsu.edu/~jburkardt/py_src/sobol/sobol.html
+
+credits to:
+@author: John Burkardt 
 '''
 
 import math
