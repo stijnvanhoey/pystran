@@ -14,7 +14,7 @@ git push origin master
 # handle pages files
 git checkout gh-pages 
 # remove the old _files
-rm -r ._*
+rm -r ./_*
 # put new hmtl files in the directory
 mv docs/build/html/* .
 
