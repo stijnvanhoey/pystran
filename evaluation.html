@@ -1,0 +1,1221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Evaluation Criteria &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="index.html" />
+    <link rel="next" title="Model Parameters" href="parameter.html" />
+    <link rel="prev" title="Welcome to pystran documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parameter.html" title="Model Parameters"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pystran documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pystran 0.1.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="evaluation-criteria">
+<h1>Evaluation Criteria<a class="headerlink" href="#evaluation-criteria" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="objective-functions">
+<h2>Objective functions<a class="headerlink" href="#objective-functions" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pystran.Evaluation">
+<em class="property">class </em><code class="descclassname">pystran.</code><code class="descname">Evaluation</code><span class="sig-paren">(</span><em>observed</em>, <em>modelled</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for deriving different evaluation criteria.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id9">2</a>, <a class="fn-backref" href="#id24">3</a>)</em> Gupta H.V., Sorooshian S., Yapo P.O.(1998), Toward improved
+calibration of hydrologic models: Multiple and noncommensurable
+measures of information, Water Resources Research,pp 751-763</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="e2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E2]</td><td>H. Hauduc, M. B. Neumann, D. Muschalla, V. Gamerith, S. Gillot
+and P.A. Vanrolleghem (2011), Towards quantitative quality criteria
+to evaluate simulation results in wastewater treatment – A critical
+review. Proceedings 8th symposium on systems analysis and integrated
+assessment (Watermatex 2011)</td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pystran.Evaluation.AME">
+<code class="descname">AME</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.AME"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.AME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Absolute Maximum Error</p>
+<p class="rubric">Notes</p>
+<p>The absolute maximum error indicates the maximum error of the model
+<a class="reference internal" href="#e1" id="id1">[E1]</a>. This criterion is very sensitive to outliers</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.APBIAS">
+<code class="descname">APBIAS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.APBIAS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.APBIAS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Absolute Percent Bias</p>
+<p class="rubric">Notes</p>
+<p>Useful in combi with PBIAS, eg if PBIAS small and APB very large one
+could conclude that volumes are ok, but timing is missing
+(continuous gap)</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.BIAS">
+<code class="descname">BIAS</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.BIAS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.BIAS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bias E[obs-mod]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.CrBal">
+<code class="descname">CrBal</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.CrBal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.CrBal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Balance Criterion</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm (1- CrBal)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>[E9] use the balance criterion to measure the ability of the model
+to reproduce the same cumulative as observed. The difference between
+the inversed fractions penalises larger differences between
+observed and modelled cumulative values.</p>
+<ul class="simple">
+<li>range: [-inf, 1]</li>
+<li>optimum: 1</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.HighFDCE">
+<code class="descname">HighFDCE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.HighFDCE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.HighFDCE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flow Duration Curve based high flow criterion</p>
+<p class="rubric">Notes</p>
+<p>Uses the upper part (lowest percentiles) of the Flow Duration Curve
+to focus on high flow regimes. Always use in combination with a
+second criterion to make sure the timing of the model is also
+satifying. Used in [E15].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.IA">
+<code class="descname">IA</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.IA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.IA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index of agreement</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Index of agreement is te ratio of the sum of squared errors (SSE)
+and the largest potential error with respect to the mean of the
+observed values, <a class="reference internal" href="#e4" id="id4">[E4]</a>. This is sensitive to the model mean and to
+the peak values, and is insensitive to low magnitude values.</p>
+<ul class="simple">
+<li>range: [0, 1]</li>
+<li>optimum: 1</li>
+<li>category: comparison with reference model</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.LowFDCE">
+<code class="descname">LowFDCE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.LowFDCE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.LowFDCE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flow Duration Curve based low flow criterion</p>
+<p class="rubric">Notes</p>
+<p>Uses the lower part (highest percentiles) of the Flow Duration Curve
+to focus on low flow regimes. Always use in combination with a
+second criterion to make sure the timing of the model is also
+satifying. Used in [E15].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MAE">
+<code class="descname">MAE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MAE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MAE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Absolute Error</p>
+<p class="rubric">Notes</p>
+<p>The mean absolute error indicates the average magnitude of the model
+error (accuracy) <a class="reference internal" href="#e4" id="id6">[E4]</a>. Taking the absolute value
+avoids error compensation, but does not indicate the direction of
+the deviation.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E4]</td><td><em>(<a class="fn-backref" href="#id4">1</a>, <a class="fn-backref" href="#id6">2</a>, <a class="fn-backref" href="#id13">3</a>)</em> Willmott C.J., Ackleson S.G., Davis R.E., Feddema J.J.,
+Klink K.M., Legates D.R., O&#8217;Donnell J. and Rowe C.M. (1985)
+Statistics for the evaluation and comparison of models.
+Journal of Geophysical Research, 90(C5), 8995-9005.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MAPE">
+<code class="descname">MAPE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MAPE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MAPE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Absolute Percent Error</p>
+<p class="rubric">Notes</p>
+<p>The mean absolute percent error used by <a class="reference internal" href="#e3" id="id7">[E3]</a>  is close to MARE.
+However, the errors are relative to the predicted values instead
+of the observed values. Consequently, the under-predicted values
+are penalised (for a similar error). This is an interesting criterion
+for situations in which one wants to determine a risk to reach
+concentration limits.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Relative criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MARE">
+<code class="descname">MARE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MARE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MARE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Absolute Relative Error</p>
+<p class="rubric">Notes</p>
+<p>The mean absolute relative error is similar to the Mean Relative Error,
+but avoids the compensation of errors <a class="reference internal" href="#e7" id="id8">[E7]</a>.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Relative criteria</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e7" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id8">[E7]</a></td><td>Petersen B., Gernaey K., Henze M. and Vanrolleghem P.A.
+(2002) Evaluation of an ASM1 model calibration procedure on a
+municipal-industrial wastewater treatment plant. Journal of
+Hydroinformatics, 4(1), 15-38.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.ME">
+<code class="descname">ME</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.ME"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.ME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Error</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The mean of residuals allows highlighting the existence of systematic
+bias, i.e. characteristic of a model leading to systematic over- or
+under-prediction <a class="reference internal" href="#e1" id="id9">[E1]</a>. However, with this criterion errors
+can compensate each other, so no information on the magnitude of
+the errors is obtained.</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E3]</td><td><em>(<a class="fn-backref" href="#id7">1</a>, <a class="fn-backref" href="#id10">2</a>, <a class="fn-backref" href="#id33">3</a>)</em> Power M. (1993) The predictive validation of ecological and
+environmental models. Ecological Modelling, 68(1-2), 33-50.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MPE">
+<code class="descname">MPE</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MPE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MPE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Percent Error</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">MRE</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>The mean percent error <a class="reference internal" href="#e3" id="id10">[E3]</a> provide the average relative model
+error. However, negative and positive errors can compensate for
+each other.</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: Relative criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MRE">
+<code class="descname">MRE</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MRE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MRE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Relative Error</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The mean relative error <a class="reference internal" href="#e5" id="id11">[E5]</a> provide the average relative model
+error. However, negative and positive errors can compensate for
+each other.</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: Relative criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MSDE">
+<code class="descname">MSDE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MSDE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MSDE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Square Derivative Error</p>
+<p class="rubric">Notes</p>
+<p>The mean square derivative error is the square of the differences
+of predicted and observed variations between two time steps <a class="reference internal" href="#e5" id="id12">[E5]</a>.
+This criterion penalizes noisy time series and series with
+timing error; it thus allows evaluating the peak&#8217;s timing.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MSE">
+<code class="descname">MSE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Squared Error</p>
+<p class="rubric">Notes</p>
+<p>The mean square error avoids error compensations and
+emphasises high errors <a class="reference internal" href="#e4" id="id13">[E4]</a>.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MSLE">
+<code class="descname">MSLE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MSLE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MSLE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Squared Logarithm Error</p>
+<p class="rubric">Notes</p>
+<p>The mean square logarithm error is the sum of the squares of
+the differences of the natural logarithm of the predicted and
+observed value <a class="reference internal" href="#e5" id="id14">[E5]</a>. It emphasises low magnitude
+errors.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E5]</td><td><em>(<a class="fn-backref" href="#id11">1</a>, <a class="fn-backref" href="#id12">2</a>, <a class="fn-backref" href="#id14">3</a>, <a class="fn-backref" href="#id15">4</a>, <a class="fn-backref" href="#id16">5</a>, <a class="fn-backref" href="#id19">6</a>, <a class="fn-backref" href="#id21">7</a>)</em> Dawson C.W., Abrahart R.J. and See L.M. (2010) HydroTest:
+Further development of a web resource for the standardised
+assessment of hydrological models. Environmental Modelling and
+Software, 25(11), 1481-1482.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MSRE">
+<code class="descname">MSRE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MSRE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MSRE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Square Relative Error</p>
+<p class="rubric">Notes</p>
+<p>The mean square relative error avoids compensation of errors and
+emphasises larger relative errors <a class="reference internal" href="#e5" id="id15">[E5]</a>.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Relative criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MSSoE">
+<code class="descname">MSSoE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MSSoE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MSSoE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean Sqaured sorted Errors</p>
+<p class="rubric">Notes</p>
+<p>The mean square error of sorted errors is calculated based on sorted
+observed and predicted data (van Griensven and Bauwens, 2003).
+Observations and predictions are sorted independently one from the
+other. The sorted series are then compared (comparison of their
+cumulative distributions) and it is evaluated whether the model
+reproduces the same distribution as the observed data.</p>
+<p>The time of occurrence of a given value of the variable is not
+accounted for in the MSSoE method.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria, timestep independent</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id32">[E6]</a></td><td>van Griensven A. and Bauwens W. (2003) Multiobjective
+autocalibration for semidistributed water quality models. Water
+Resources Research, 39(12), SWC91-SWC99.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.MeAPE">
+<code class="descname">MeAPE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.MeAPE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.MeAPE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Median Absolute Percent Error</p>
+<p class="rubric">Notes</p>
+<p>Median of the absolute relative error expressed in percentage <a class="reference internal" href="#e5" id="id16">[E5]</a>.
+This criterion is less affected by outliers and the errors
+distribution form as the MARE criterion.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Relative criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSC">
+<code class="descname">NSC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of Sign Changes of the residuals</p>
+<p class="rubric">Notes</p>
+<p>The number of sign changes,[E1]_, counts the number of times the
+residual (Oi-Pi) sign change. The minimum value is zero and the
+maximum n. A value close to zero indicates a systematic error
+(overestimating or under-estimating model) but a more consistent
+model. A value close to n indicates a random error.</p>
+<ul class="simple">
+<li>range: [0, nsize]</li>
+<li>optimum: /</li>
+<li>category: Absolute criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSE">
+<code class="descname">NSE</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nash-Sutcliffe Efficiency criterion</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Widely used criterion in hydrology, values ranging from -infty -&gt; 1
+A zero value means the model is not better than the &#8216;no knowledge&#8217;
+model, which is characterised by the mean of the observations.
+Sensitive to extreme values.</p>
+<ul class="simple">
+<li>range: [-inf, 1]</li>
+<li>optimum: 1</li>
+<li>category: comparison with reference model</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSE_BIAS">
+<code class="descname">NSE_BIAS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSE_BIAS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSE_BIAS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combination of Nash Sutcliff and BIAS</p>
+<p class="rubric">Notes</p>
+<p>The criterium is gaining importance by the combined effect and is
+proposed in <a class="reference internal" href="#e16" id="id17">[E16]</a>. Here an adaptation is implemented by taking the
+absolute value of the bias, to make the function symmetrical around
+the optimal value.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e16" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id17">[E16]</a></td><td>Viney, N.R., J. Perraud, J. Vaze F.H.S. Chiew, D.A. Post
+and A. Yang (2009b).  The usefulness of bias constraints in model
+calibration for regionalisation to ungauged catchments.
+Proceedings, MODSIM 200</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSE_FDChigh">
+<code class="descname">NSE_FDChigh</code><span class="sig-paren">(</span><em>w1=1.0</em>, <em>w2=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSE_FDChigh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSE_FDChigh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nash Sutcliff (mod) + high Flow; zelfde gewichtsfactor: als fout groter, ook beide groter!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>w1</strong> : float (0-1)</p>
+<blockquote>
+<div><p>weighting factor 1, NSE</p>
+</div></blockquote>
+<p><strong>w2</strong> : float (0-1)</p>
+<blockquote class="last">
+<div><p>weighting factor 2, FDC</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSE_FDClow">
+<code class="descname">NSE_FDClow</code><span class="sig-paren">(</span><em>w1=1.0</em>, <em>w2=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSE_FDClow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSE_FDClow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nash Sutcliffe (mod) + low Flow; zelfde gewichtsfactor,
+als fout groter, ook beide groter!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>w1</strong> : float (0-1)</p>
+<blockquote>
+<div><p>weighting factor 1, NSE</p>
+</div></blockquote>
+<p><strong>w2</strong> : float (0-1)</p>
+<blockquote class="last">
+<div><p>weighting factor 2, FDC</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSE_boxcox">
+<code class="descname">NSE_boxcox</code><span class="sig-paren">(</span><em>optim=False</em>, <em>llambda=0.25</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSE_boxcox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSE_boxcox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nash-Sutcliffe Efficiency criterion with boxcox transformed values</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Widely used criterion in hydrology, values ranging from -infty -&gt; 1
+A zero value means the model is not better than the &#8216;no knowledge&#8217;
+model, which is characterised by the mean of the observations.</p>
+<p>Model residuals typically increase with higher flowvalues. This
+means that themodel residual variance or standard deviation typically
+increases with increasing flow. It also means that the higher flow
+values receive more weight in the goodness-of-fit statistics, <a class="reference internal" href="#e10" id="id18">[E10]</a>.</p>
+<ul class="simple">
+<li>range: [-inf, 1]</li>
+<li>optimum: 1</li>
+<li>category: comparison with reference model</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e10" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id18">[E10]</a></td><td>Willems, P. A Time Series Tool to Support the
+Multi-criteria Performance Evaluation of Rainfall-runoff
+Models. Environmental Modelling &amp; Software 24, no. 3 (March 2009):
+311–321.
+<a class="reference external" href="http://linkinghub.elsevier.com/retrieve/pii/S1364815208001606">http://linkinghub.elsevier.com/retrieve/pii/S1364815208001606</a>.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSE_log">
+<code class="descname">NSE_log</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSE_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSE_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nash-Sutcliffe Efficiency criterion with logarithmic values</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Widely used criterion in hydrology, values ranging from -infty -&gt; 1
+A zero value means the model is not better than the &#8216;no knowledge&#8217;
+model, which is characterised by the mean of the observations.
+The log values of the observed and measured values are used to
+give more emphasis to the lower values</p>
+<ul class="simple">
+<li>range: [-inf, 1]</li>
+<li>optimum: 1</li>
+<li>category: comparison with reference model</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.NSE_sqrt">
+<code class="descname">NSE_sqrt</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.NSE_sqrt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.NSE_sqrt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nash-Sutcliffe Efficiency criterion with root values</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Widely used criterion in hydrology, values ranging from -infty -&gt; 1
+A zero value means the model is not better than the &#8216;no knowledge&#8217;
+model, which is characterised by the mean of the observations.
+The root values of the observed and measured values are used to
+give more emphasis to the lower values</p>
+<ul class="simple">
+<li>range: [-inf, 1]</li>
+<li>optimum: 1</li>
+<li>category: comparison with reference model</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.PBIAS">
+<code class="descname">PBIAS</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.PBIAS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.PBIAS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Percent Bias</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The percent bias <a class="reference internal" href="#e5" id="id19">[E5]</a> and relative volume error are the sum of
+errors related to the sum of observed values, expressed as
+relative value or in percentage. This criterion measures an overall
+adequacy, but the errors can be compensated.</p>
+<p>(Also known as DEVRV,  the Deviation of runoff volumes, From
+Statistical evaluation of WATFLOOD, Angela MacLean, University of
+Waterloo)</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.PDIFF">
+<code class="descname">PDIFF</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.PDIFF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.PDIFF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Peak Difference</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This criterion evaluate how well the highest modelled value matches
+the highest observed value in percent. However, it does not take into
+account whether the max(Oi) and max(Pi) occur at the same time-step i.</p>
+<p>Consequently, in case of multiple events on the same time-series,
+first the single events must be extracted from the whole time series
+to have less chance to mix up with peaks from another event.</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: single event</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.PEP">
+<code class="descname">PEP</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.PEP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.PEP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Percent Error In Peak</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This criterion evaluate how well the highest modelled value matches
+the highest observed value in percent. However, it does not take into
+account whether the max(Oi) and max(Pi) occur at the same time-step i.</p>
+<p>Consequently, in case of multiple events on the same time-series,
+first the single events must be extracted from the whole time series
+to have less chance to mix up with peaks from another event.</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: single event</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.PI">
+<code class="descname">PI</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.PI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.PI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coefficient of Persistance</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The coefficient of persistence is close tot the NSE criterion, but the
+simplistic model used is th elast observed value instead of the
+mean of observed values, <a class="reference internal" href="#e12" id="id20">[E12]</a>.</p>
+<ul class="simple">
+<li>range: [0, 1]</li>
+<li>optimum: 1</li>
+<li>category: comparison with reference model</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.R4MS4E">
+<code class="descname">R4MS4E</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.R4MS4E"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.R4MS4E" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root 4 Mean Square 4  Error</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">RMSE</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>To put even more emphasis on the larger errors, the fourth root mean
+quadruples error is used <a class="reference internal" href="#e5" id="id21">[E5]</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RAE">
+<code class="descname">RAE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RAE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RAE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relative Absolute Error</p>
+<p class="rubric">Notes</p>
+<p>The RAE compares the sum of the absolute residuals to the residuals
+of the no knowledge model (mean of observed values, <a class="reference internal" href="#e11" id="id22">[E11]</a>. This
+criterion does not allow error compensation.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: comparison with reference model</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e11" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E11]</td><td><em>(<a class="fn-backref" href="#id22">1</a>, <a class="fn-backref" href="#id23">2</a>)</em> Legates D.R. and McCabe G.J. (1999) Evaluating the use of
+&#8216;goodness-of-fit&#8217; measures in hydrologic and hydroclimatic
+model validation. Water Resources Research, 35(1), 233-241</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RCOEF">
+<code class="descname">RCOEF</code><span class="sig-paren">(</span><em>optim=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RCOEF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RCOEF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Correlation coefficient</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>optim</strong> : bool</p>
+<blockquote class="last">
+<div><p>if True, the objective is translated to be used in optimizations
+where a minimum value is seeked by the algorithm</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Used to describe how well a regression line fits a set of data,
+compares variability in observed and modelled values. In general not
+the best criteria to check model performance,
+see more details in <a class="reference internal" href="#e11" id="id23">[E11]</a>.</p>
+<ul class="simple">
+<li>range: [0, 1]</li>
+<li>optimum: 1</li>
+<li>category: comparison with reference model</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RFLAUT">
+<code class="descname">RFLAUT</code><span class="sig-paren">(</span><em>theta=1</em>, <em>method='biomath'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RFLAUT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RFLAUT" title="Permalink to this definition">¶</a></dt>
+<dd><p>First (or higher) lag autocorrelation, higher values of theta gives
+the higher value</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>theta</strong> : int</p>
+<blockquote>
+<div><p>lag to calculate</p>
+</div></blockquote>
+<p><strong>method</strong> : biomath|gupta|anders</p>
+<blockquote class="last">
+<div><p>method to calculate the correlation</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Calculates the first lag of the autocorrelation of the residuals,
+according to the version proposed by <a class="reference internal" href="#e1" id="id24">[E1]</a> when method &#8216;gupta1998&#8217;
+is chosen. Default is the biomath version, as proposed by Gujer, 2008
+and more information is given in <a class="reference internal" href="#e12" id="id25">[E12]</a></p>
+<ul class="simple">
+<li>range: [0, 1]</li>
+<li>optimum: 0</li>
+<li>category: others</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e13" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E13]</td><td>Cierkens, Katrijn. Investigating Bioprocess Model Output</td></tr>
+</tbody>
+</table>
+<p>Uncertainty as Function of Input Data Quantity and Model Structure.
+Ghent University, 2010.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RMAE">
+<code class="descname">RMAE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RMAE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RMAE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relative Mean Absolute Error</p>
+<p class="rubric">Notes</p>
+<p>The relative mean absolute error is the sum of absolute errors related
+to the sum of observed data <a class="reference internal" href="#e8" id="id26">[E8]</a>. The difference with the PBIAS and
+RVE is that errors are not compensated.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E8]</td><td><em>(<a class="fn-backref" href="#id26">1</a>, <a class="fn-backref" href="#id34">2</a>)</em> Elliott J.A., Irish A.E., Reynolds C.S. and Tett P. (2000)
+Modelling freshwater phytoplankton communities: an exercise
+in validation. Ecological Modelling, 128(1), 19-26.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RMSE">
+<code class="descname">RMSE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RMSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RMSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root Mean Square Error</p>
+<p class="rubric">Notes</p>
+<p>The root mean square error is an absolute criterion that is often
+used <a href="#id35"><span class="problematic" id="id36"><span id="id27"></span>[4]_</span></a>. It indicates the overall agreement
+between predicted and observed data. The square allows avoiding
+error compensation and emphasises larger errors. The root provides
+a criterion in actual units. Consequently, this quality criterion
+can be compared to the MAE to provide information on the prominence
+of outliers in the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RMSE_boxcox">
+<code class="descname">RMSE_boxcox</code><span class="sig-paren">(</span><em>llambda=0.25</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RMSE_boxcox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RMSE_boxcox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root Mean Square Error with boxcox trfd values</p>
+<p class="rubric">Notes</p>
+<p>The root mean square error is an absolute criterion that is often
+used <a href="#id37"><span class="problematic" id="id38"><span id="id28"></span>[4]_</span></a>. It indicates the overall agreement
+between predicted and observed data. The square allows avoiding
+error compensation and emphasises larger errors. The root provides
+a criterion in actual units. Consequently, this quality criterion
+can be compared to the MAE to provide information on the prominence
+of outliers in the dataset. Also applied in <a class="reference internal" href="#e14" id="id29">[E14]</a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RMSE_log">
+<code class="descname">RMSE_log</code><span class="sig-paren">(</span><em>llambda=0.25</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RMSE_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RMSE_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root Mean Square Error with boxcox trfd values</p>
+<p class="rubric">Notes</p>
+<p>The root mean square error is an absolute criterion that is often
+used <a href="#id39"><span class="problematic" id="id40"><span id="id30"></span>[4]_</span></a>. It indicates the overall agreement
+between predicted and observed data. The square allows avoiding
+error compensation and emphasises larger errors. The root provides
+a criterion in actual units. Consequently, this quality criterion
+can be compared to the MAE to provide information on the prominence
+of outliers in the dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RRMSE">
+<code class="descname">RRMSE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RRMSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RRMSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relative Root Mean Square Error</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal"><span class="pre">RMSE</span></code></p>
+</div>
+<p class="rubric">Notes</p>
+<p>The relative Root Mean Square Error is the Root Mean Square Error
+devided by the mean of the observations.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RSR">
+<code class="descname">RSR</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RSR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RSR" title="Permalink to this definition">¶</a></dt>
+<dd><p>RMSE-observation standard deviation ratio</p>
+<p class="rubric">Notes</p>
+<p>The RMSE-observation standard deviation ratio is the RMSE of the
+predicted data divided by the RMSE of the no knowledge model
+(mean of observed values), <a class="reference internal" href="#e12" id="id31">[E12]</a>. It is a scaled criterion that
+emphasises larger errors and can be, as for MAE and RMSE, compared
+to the RAE to indicate the influence of larger errors.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: comparison with reference model</li>
+</ul>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e12" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[E12]</td><td><em>(<a class="fn-backref" href="#id20">1</a>, <a class="fn-backref" href="#id25">2</a>, <a class="fn-backref" href="#id31">3</a>)</em> Moriasi D.N., Arnold J.G., Van Liew M.W., Bingner R.L.,
+Harmel R.D. and Veith T.L. (2007) Model evaluation guidelines
+for systematic quantification of accuracy in watershed
+simulations. Transactions of the ASABE, 50(3), 885-900</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.RVE">
+<code class="descname">RVE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.RVE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.RVE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relative Volume Error</p>
+<p class="rubric">Notes</p>
+<p>The Relative volume error are the sum of errors related to the sum of
+observed values, expressed as relative value or in percentage.
+This criterion measures an overall adequacy, but the errors can be
+compensated</p>
+<ul class="simple">
+<li>range: [-inf, inf]</li>
+<li>optimum: 0</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.SARE">
+<code class="descname">SARE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.SARE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.SARE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum of Absolute Relative Error</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Relative criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.SFDCE">
+<code class="descname">SFDCE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.SFDCE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.SFDCE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Slope of the flow duration curve error</p>
+<p class="rubric">Notes</p>
+<p>Based on the FDC, measures how well the model captures the
+distribution of mid-level flow. The slope of a watershed&#8217;s flow
+duration curve indicates the variability, or flashiness, of its
+flow magnitudes. The SFDCE metric is thus simply the absolute
+error in the slope of the flow duration curve between the 30
+and 70 percentile flows.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="e14" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id29">[E14]</a></td><td>van Werkhoven, Kathryn, Thorsten Wagener, Patrick Reed,
+and Yong Tang. Sensitivity-guided Reduction of Parametric
+Dimensionality for Multi-objective Calibration of Watershed
+Models. Advances in Water Resources 32, no. 8 (2009): 1154–1169.
+<a class="reference external" href="http://dx.doi.org/10.1016/j.advwatres.2009.03.002">http://dx.doi.org/10.1016/j.advwatres.2009.03.002</a>.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.SSE">
+<code class="descname">SSE</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.SSE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.SSE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum of Squared Errors (of prediction)</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Absolute criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.TMC">
+<code class="descname">TMC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.TMC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.TMC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Totel Mass Controller</p>
+<p class="rubric">Notes</p>
+<p><a class="reference internal" href="#e6" id="id32">[E6]</a> use the Total Mass Controller criterion as an objective
+function. This criterion compares the cumulative predicted and
+observed values</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.ThInC">
+<code class="descname">ThInC</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.ThInC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.ThInC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Theils Inequality Coefficient</p>
+<p class="rubric">Notes</p>
+<p>Theil&#8217;s inequality coefficient used by <a class="reference internal" href="#e3" id="id33">[E3]</a> and <a class="reference internal" href="#e8" id="id34">[E8]</a> is the mean
+square error divided by the sum of observed data. This criterion
+avoids error compensation and emphasises larger errors.</p>
+<ul class="simple">
+<li>range: [0, inf]</li>
+<li>optimum: 0</li>
+<li>category: Total Relative error criteria</li>
+</ul>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.check_boxcox">
+<code class="descname">check_boxcox</code><span class="sig-paren">(</span><em>llambda</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.check_boxcox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.check_boxcox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to evaluate the effect of the box cox transformation
+applied on the data, cfr. WETSPRO tool, hydromad application</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.Evaluation.infodict">
+<code class="descname">infodict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/evaluationfunctions.html#Evaluation.infodict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.Evaluation.infodict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepares information dictionary</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Evaluation Criteria</a><ul>
+<li><a class="reference internal" href="#objective-functions">Objective functions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to pystran documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parameter.html"
+                        title="next chapter">Model Parameters</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/evaluation.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parameter.html" title="Model Parameters"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pystran documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pystran 0.1.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, S. Van Hoey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

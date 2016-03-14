@@ -1,0 +1,1289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pystran.sensitivity_morris &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pystran.sensitivity_morris</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author: VHOEYS</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">MaxNLocator</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.axes_grid1.inset_locator</span> <span class="kn">import</span> <span class="n">zoomed_inset_axes</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.axes_grid1.inset_locator</span> <span class="kn">import</span> <span class="n">mark_inset</span>
+<span class="kn">from</span> <span class="nn">matplotlib.transforms</span> <span class="kn">import</span> <span class="n">offset_copy</span>
+
+<span class="kn">from</span> <span class="nn">sensitivity_base</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">extrafunctions</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">plot_functions_rev</span> <span class="kn">import</span> <span class="n">plotbar</span><span class="p">,</span> <span class="n">scatterwithtext</span>
+<span class="kn">from</span> <span class="nn">latextablegenerator</span> <span class="kn">import</span> <span class="o">*</span>
+
+<div class="viewcode-block" id="MorrisScreening"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening">[docs]</a><span class="k">class</span> <span class="nc">MorrisScreening</span><span class="p">(</span><span class="n">SensitivityAnalysis</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Morris screening method, with the improved sampling strategy,</span>
+<span class="sd">    selecting a subset of the trajectories to improve the sampled space.</span>
+<span class="sd">    Working with groups is possible.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">    parsin : list</span>
+<span class="sd">        either a list of (min,max,&#39;name&#39;) values,</span>
+<span class="sd">        [(min,max,&#39;name&#39;),(min,max,&#39;name&#39;),...(min,max,&#39;name&#39;)]</span>
+<span class="sd">        or a list of ModPar instances</span>
+<span class="sd">    ModelType : pyFUSE | PCRaster | external</span>
+<span class="sd">        Give the type of model working withµ</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ------------</span>
+<span class="sd">    _ndim :  int</span>
+<span class="sd">        number of factors examined. In case the groups are chosen the number of factors is stores in NumFact and sizea becomes the number of created groups, (k)</span>
+<span class="sd">    NumFact : int</span>
+<span class="sd">        number of factors examined in the case when groups are chosen</span>
+<span class="sd">    intervals(p) : int</span>
+<span class="sd">        number of intervals considered in (0, 1)</span>
+<span class="sd">    UB : ndarray</span>
+<span class="sd">        Upper Bound for each factor in list or array, (sizea,1)</span>
+<span class="sd">    LB : ndarray</span>
+<span class="sd">        Lower Bound for each factor in list or array, (sizea,1)</span>
+<span class="sd">    GroupNumber : int</span>
+<span class="sd">        Number of groups (eventually 0)</span>
+<span class="sd">    GroupMat : ndarray</span>
+<span class="sd">        Array which describes the chosen groups. Each column represents</span>
+<span class="sd">        a group and its elements are set to 1 in correspondence of the</span>
+<span class="sd">        factors that belong to the fixed group. All the other elements</span>
+<span class="sd">        are zero, (NumFact,GroupNumber)</span>
+<span class="sd">    Delta : float</span>
+<span class="sd">        jump value to calculate screening</span>
+<span class="sd">    intervals : int</span>
+<span class="sd">        number of intervals used in the sampling</span>
+<span class="sd">    noptimized : int</span>
+<span class="sd">        r-value of the number of base runs are done in the optimize sampling</span>
+<span class="sd">    OutMatrix : ndarray</span>
+<span class="sd">        not-optimized sample matrix</span>
+<span class="sd">    OutFact : ndarray</span>
+<span class="sd">        not-optimzed matrix of changing factors</span>
+<span class="sd">    Groupnumber : int</span>
+<span class="sd">        number of groups used</span>
+<span class="sd">    sizeb : int</span>
+<span class="sd">        when using groups, sizeb is determined by the number of groups,</span>
+<span class="sd">        otherwise the number of factors</span>
+<span class="sd">    OptMatrix_b : ndarray</span>
+<span class="sd">        the not-adapted version of the OptMatrix, with all sampled values</span>
+<span class="sd">        between, 0 and 1</span>
+<span class="sd">    parset2run : ndarrar</span>
+<span class="sd">        every row is a parameter set to run the model for. All sensitivity</span>
+<span class="sd">        methods have this attribute to interact with base-class running</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    ---------</span>
+<span class="sd">    Original Matlab code from:</span>
+<span class="sd">        http://sensitivity-analysis.jrc.it/software/index.htm</span>
+
+<span class="sd">    Original method described in [M1]_, improved by the optimization of [M2]_.</span>
+<span class="sd">    The option to work with groups is added, as described in [M2]_.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    ------------</span>
+<span class="sd">    &gt;&gt;&gt; Xi = [(0.0,5.0,r&#39;$X_1$&#39;),(4.0,7.0,r&#39;$X_2$&#39;),(0.0,1.0,r&#39;$X_3$&#39;),</span>
+<span class="sd">              (0.0,1.0,r&#39;$X_4$&#39;), (0.0,1.0,r&#39;$X_5$&#39;),(0.5,0.9,r&#39;$X_6$&#39;)]</span>
+<span class="sd">    &gt;&gt;&gt; # Set up the morris class instance with uncertain factors Xi</span>
+<span class="sd">    &gt;&gt;&gt; sm = MorrisScreening(Xi,ModelType = &#39;external&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; # calculate an optimized set of parameter sets to run model</span>
+<span class="sd">    &gt;&gt;&gt; OptMatrix, OptOutVec = sm.Optimized_Groups(nbaseruns=100,</span>
+<span class="sd">                                               intervals = 4, noptimized=4,</span>
+<span class="sd">                                               Delta = 0.4)</span>
+<span class="sd">    &gt;&gt;&gt; # Check the quality of the selected trajects</span>
+<span class="sd">    &gt;&gt;&gt; sm.Optimized_diagnostic(width=0.15)</span>
+<span class="sd">    &gt;&gt;&gt; #RUN A MODEL AND GET OUTPUT (EXTERNAL) -&gt; get output</span>
+<span class="sd">    &gt;&gt;&gt; #Calculate the Morris screening diagnostics</span>
+<span class="sd">    &gt;&gt;&gt; sm.Morris_Measure_Groups(output)</span>
+<span class="sd">    &gt;&gt;&gt; #plot a barplot of mu, mustar and sigma (edgecolor and facecolor grey)</span>
+<span class="sd">    &gt;&gt;&gt; sm.plotmu(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; sm.plotmustar(outputid = 1,ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; sm.plotsigma(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; #plot the mu* sigma plain</span>
+<span class="sd">    &gt;&gt;&gt; sm.plotmustarsigma(zoomperc = 0.05, outputid = 1, loc = 2)</span>
+<span class="sd">    &gt;&gt;&gt; #export the results in txt file</span>
+<span class="sd">    &gt;&gt;&gt; sm.txtresults(name=&#39;MorrisTestOut.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; #export the results in tex-table</span>
+<span class="sd">    &gt;&gt;&gt; sm.latexresults(name=&#39;MorrisTestOut.tex&#39;)</span>
+
+
+<span class="sd">    References</span>
+<span class="sd">    ------------</span>
+<span class="sd">    ..  [M1] Morris, Max D. Factorial Sampling Plans for Preliminary Computational</span>
+<span class="sd">        Experiments. Technometrics 33, no. 2 (1991): 161–174.</span>
+
+<span class="sd">    ..  [M2] Campolongo, Francesca, Jessica Cariboni, and Andrea Saltelli.</span>
+<span class="sd">        An Effective Screening Design for Sensitivity Analysis of Large Models.</span>
+<span class="sd">        Environmental Modelling &amp; Software 22, no. 10 (October 2007): 1509–1518.</span>
+<span class="sd">        http://linkinghub.elsevier.com/retrieve/pii/S1364815206002805.</span>
+
+<span class="sd">    ..  [M3] Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo,</span>
+<span class="sd">        Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano Tarantola.</span>
+<span class="sd">        Global Sensitivity Analysis, The Primer. John Wiley &amp; Sons Ltd, 2008.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">,</span> <span class="n">ModelType</span> <span class="o">=</span> <span class="s1">&#39;external&#39;</span><span class="p">):</span>
+        <span class="n">SensitivityAnalysis</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_methodname</span> <span class="o">=</span> <span class="s1">&#39;MorrisScreening&#39;</span>
+
+        <span class="k">if</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;pyFUSE&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is built up by the pyFUSE environment&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;external&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is externally run&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;PCRaster&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;PCRasterPython&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a PCRasterPython Framework instance&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;testmodel&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;testmodel&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a testmodel&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Not supported model type&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">LB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">el</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">UB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span><span class="p">])</span>
+
+<div class="viewcode-block" id="MorrisScreening.Sampling_Function_2"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.Sampling_Function_2">[docs]</a>    <span class="k">def</span> <span class="nf">Sampling_Function_2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="p">,</span> <span class="n">LB</span><span class="p">,</span> <span class="n">UB</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Python version of the Morris sampling function</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        nbaseruns : int</span>
+<span class="sd">            sample size</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        OutMatrix(sizeb*r, sizea) :</span>
+<span class="sd">            for the entire sample size computed In(i,j) matrices, values to</span>
+<span class="sd">            run model for</span>
+<span class="sd">        OutFact(sizea*r,1) :</span>
+<span class="sd">            for the entire sample size computed Fact(i,1) vectors, indicates</span>
+<span class="sd">            the factor changing at specific line</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        B0 is constructed as in Morris design when groups are not considered.</span>
+<span class="sd">        When groups are considered the routine follows the following steps</span>
+
+<span class="sd">        1. Creation of P0 and DD0 matrices defined in Morris for the groups.</span>
+<span class="sd">        This means that the dimensions of these 2 matrices are</span>
+<span class="sd">        (GroupNumber,GroupNumber).</span>
+
+<span class="sd">        2. Creation of AuxMat matrix with (GroupNumber+1,GroupNumber)</span>
+<span class="sd">        elements.</span>
+
+<span class="sd">        3. Definition of GroupB0 starting from AuxMat, GroupMat</span>
+<span class="sd">        and P0.</span>
+
+<span class="sd">        4. The final B0 for groups is obtained as [ones(sizeb,1)*x0&#39; + GroupB0].</span>
+<span class="sd">        The P0 permutation is present in GroupB0 and it&#39;s not necessary to</span>
+<span class="sd">        permute the matrix (ones(sizeb,1)*x0&#39;) because it&#39;s already randomly</span>
+<span class="sd">        created.</span>
+
+<span class="sd">        Adapted from the matlab version of 15 November 2005 by J.Cariboni</span>
+
+<span class="sd">        References</span>
+<span class="sd">        -------------</span>
+<span class="sd">        ..  [M4] A. Saltelli, K. Chan, E.M. Scott, Sensitivity Analysis</span>
+<span class="sd">            on page 68 ss</span>
+<span class="sd">        ..  [M5] F. Campolongo, J. Cariboni, JRC - IPSC Ispra, Varese, IT</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c1">#The integration in class version not optimal, therefor this mapping</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="o">=</span> <span class="n">nbaseruns</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">nbaseruns</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intervals</span>
+        <span class="n">GroupMat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GroupMat</span>
+
+        <span class="c1"># Parameters and initialisation of the output matrix</span>
+        <span class="n">sizea</span> <span class="o">=</span> <span class="n">k</span>
+        <span class="n">Delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span>
+        <span class="n">NumFact</span> <span class="o">=</span> <span class="n">sizea</span>
+        <span class="k">if</span> <span class="n">GroupMat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="n">GroupMat</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">Groupnumber</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Groupnumber</span> <span class="o">=</span> <span class="n">GroupMat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>    <span class="c1">#size(GroupMat,2)</span>
+            <span class="n">sizea</span> <span class="o">=</span> <span class="n">GroupMat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">sizeb</span> <span class="o">=</span> <span class="n">sizea</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c1">#    sizec = 1</span>
+
+        <span class="n">Outmatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(((</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="n">NumFact</span><span class="p">))</span>
+        <span class="n">OutFact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(((</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+        <span class="c1"># For each i generate a trajectory</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+            <span class="n">Fact</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># Construct DD0</span>
+            <span class="n">DD0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diagflat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+
+            <span class="c1"># Construct B (lower triangular)</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tri</span><span class="p">((</span><span class="n">sizeb</span><span class="p">),</span> <span class="n">sizea</span><span class="p">,</span><span class="n">k</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+
+            <span class="c1"># Construct A0, A</span>
+            <span class="n">A0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">sizeb</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">sizeb</span><span class="p">,</span><span class="n">NumFact</span><span class="p">))</span>
+
+            <span class="c1"># Construct the permutation matrix P0. In each column of P0 one randomly chosen element equals 1</span>
+            <span class="c1"># while all the others equal zero.</span>
+            <span class="c1"># P0 tells the order in which order factors are changed in each</span>
+            <span class="c1"># Note that P0 is then used reading it by rows.</span>
+            <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">sizea</span><span class="p">))</span>
+            <span class="n">P0</span> <span class="o">=</span> <span class="n">I</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">sizea</span><span class="p">)]</span>
+
+            <span class="c1"># When groups are present the random permutation is done only on B. The effect is the same since</span>
+            <span class="c1"># the added part (A0*x0&#39;) is completely random.</span>
+            <span class="k">if</span> <span class="n">Groupnumber</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">B</span> <span class="o">=</span> <span class="n">B</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">GroupMat</span><span class="p">)</span><span class="o">*</span><span class="n">P0</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+
+            <span class="c1"># Compute AuxMat both for single factors and groups analysis. For Single factors analysis</span>
+            <span class="c1"># AuxMat is added to (A0*X0) and then permutated through P0. When groups are active AuxMat is</span>
+            <span class="c1"># used to build GroupB0. AuxMat is created considering DD0. If the element on DD0 diagonal</span>
+            <span class="c1"># is 1 then AuxMat will start with zero and add Delta. If the element on DD0 diagonal is -1</span>
+            <span class="c1"># then DD0 will start Delta and goes to zero.</span>
+            <span class="n">AuxMat</span> <span class="o">=</span> <span class="n">Delta</span><span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">B</span> <span class="o">-</span> <span class="n">A</span><span class="p">)</span> <span class="o">*</span> <span class="n">DD0</span> <span class="o">+</span> <span class="n">A</span><span class="p">)</span>
+
+            <span class="c1">#----------------------------------------------------------------------</span>
+            <span class="c1"># a --&gt; Define the random vector x0 for the factors. Note that x0 takes value in the hypercube</span>
+            <span class="c1"># [0,...,1-Delta]*[0,...,1-Delta]*[0,...,1-Delta]*[0,...,1-Delta]</span>
+            <span class="n">xset</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="o">-</span><span class="n">Delta</span><span class="p">,</span><span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">p</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="n">xset</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">p</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>  <span class="c1">#.transpose()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;invalid p (intervals) and Delta combination, please adapt&#39;</span><span class="p">)</span>
+
+            <span class="c1">#----------------------------------------------------------------------</span>
+            <span class="c1"># b --&gt; Compute the matrix B*, here indicated as B0. Each row in B0 is a</span>
+            <span class="c1"># trajectory for Morris Calculations. The dimension  of B0 is (Numfactors+1,Numfactors)</span>
+            <span class="k">if</span> <span class="n">Groupnumber</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">B0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A0</span><span class="o">*</span><span class="n">x0</span> <span class="o">+</span> <span class="n">AuxMat</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">B0</span> <span class="o">=</span> <span class="p">(</span><span class="n">A0</span><span class="o">*</span><span class="n">x0</span> <span class="o">+</span> <span class="n">AuxMat</span><span class="p">)</span><span class="o">*</span><span class="n">P0</span>
+
+            <span class="c1">#----------------------------------------------------------------------</span>
+            <span class="c1"># c --&gt; Compute values in the original intervals</span>
+            <span class="c1"># B0 has values x(i,j) in [0, 1/(p -1), 2/(p -1), ... , 1].</span>
+            <span class="c1"># To obtain values in the original intervals [LB, UB] we compute</span>
+            <span class="c1"># LB(j) + x(i,j)*(UB(j)-LB(j))</span>
+            <span class="n">In</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">LB</span><span class="p">,</span> <span class="p">(</span><span class="n">sizeb</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">B0</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">((</span><span class="n">UB</span><span class="o">-</span><span class="n">LB</span><span class="p">),</span> <span class="p">(</span><span class="n">sizeb</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="c1">#array!! ????</span>
+
+            <span class="c1"># Create the Factor vector. Each component of this vector indicate which factor or group of factor</span>
+            <span class="c1"># has been changed in each step of the trajectory.</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sizea</span><span class="p">):</span>
+                <span class="n">Fact</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">P0</span><span class="p">[</span><span class="n">j</span><span class="p">,:])[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">Fact</span><span class="p">[</span><span class="n">sizea</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1">#Enkel om vorm logisch te houden. of Fact kleiner maken</span>
+
+            <span class="c1">#append the create traject to the others</span>
+            <span class="n">Outmatrix</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">),:]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">In</span><span class="p">)</span>
+            <span class="n">OutFact</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">)]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Fact</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">Outmatrix</span><span class="p">,</span> <span class="n">OutFact</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.Optimized_Groups"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.Optimized_Groups">[docs]</a>    <span class="k">def</span> <span class="nf">Optimized_Groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">intervals</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">noptimized</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                         <span class="n">GroupMat</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]),</span> <span class="n">Delta</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Optimization in the choice of trajectories for the Morris experiment.</span>
+<span class="sd">        Starting from an initial set of nbaseruns, a set of noptimized runs</span>
+<span class="sd">        is selected to use for the screening techique</span>
+
+<span class="sd">        Groups can be used to evaluate parameters together</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        nbaseruns : int (default 500)</span>
+<span class="sd">            Total number of trajectories</span>
+<span class="sd">        intervals : int (default 4)</span>
+<span class="sd">            Number of levels</span>
+<span class="sd">        noptimized : int (default 10)</span>
+<span class="sd">            Final number of optimal trajectories</span>
+<span class="sd">        GroupMat : [NumFact,NumGroups]</span>
+<span class="sd">            Matrix describing the groups. Each column represents a group and</span>
+<span class="sd">            its elements are set to 1 in correspondence of the factors that</span>
+<span class="sd">            belong to the fixed group. All the other elements are zero.</span>
+<span class="sd">        Delta : &#39;default&#39;|float (0-1)</span>
+<span class="sd">            When default, the value is calculated from the p value (intervals),</span>
+<span class="sd">            otherwise the given number is taken</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        --------</span>
+<span class="sd">        OptMatrix/ self.OptOutMatrix : ndarray</span>
+<span class="sd">            Optimized sampled values giving the matrix too run the model for</span>
+
+<span class="sd">        OptOutVec/ self.OptOutFact : ndarray</span>
+<span class="sd">            Optimized sampled values giving the matrix indicating the factor</span>
+<span class="sd">            changed at a specific line</span>
+
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The combination of Delta and intervals is important to get an</span>
+<span class="sd">        good overview. The user is directed to [M3]_</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#number of trajectorie (r)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">nbaseruns</span>
+
+        <span class="c1">#check the p and Delta value workaround</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">intervals</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;It is adviced to use an even number for the p-value, number </span><span class="se">\</span>
+<span class="s1">            of intervals, since currently not all levels are explored&#39;</span>
+
+        <span class="k">if</span> <span class="n">Delta</span> <span class="o">==</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span> <span class="o">=</span> <span class="n">intervals</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="p">(</span><span class="n">intervals</span><span class="o">-</span><span class="mf">1.</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">Delta</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">Delta</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span> <span class="o">=</span> <span class="n">Delta</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Invalid Delta value, please use default or float number&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">intervals</span> <span class="o">=</span> <span class="n">intervals</span>
+
+<span class="c1">#        p = intervals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">noptimized</span> <span class="o">=</span> <span class="n">noptimized</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">noptimized</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">GroupMat</span> <span class="o">=</span> <span class="n">GroupMat</span>
+        <span class="n">NumFact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span>
+
+        <span class="n">LBt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NumFact</span><span class="p">)</span>
+        <span class="n">UBt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">NumFact</span><span class="p">)</span>
+
+        <span class="n">OutMatrix</span><span class="p">,</span> <span class="n">OutFact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Sampling_Function_2</span><span class="p">(</span><span class="n">nbaseruns</span><span class="p">,</span> <span class="n">LBt</span><span class="p">,</span> <span class="n">UBt</span><span class="p">)</span> <span class="c1">#Version with Groups</span>
+
+        <span class="c1">#again mapping (not optimal)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">OutMatrix</span> <span class="o">=</span> <span class="n">OutMatrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">OutFact</span> <span class="o">=</span> <span class="n">OutFact</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">Groupnumber</span> <span class="o">=</span> <span class="n">GroupMat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">Groupnumber</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Groupnumber</span> <span class="o">=</span> <span class="n">Groupnumber</span>
+
+        <span class="k">if</span> <span class="n">Groupnumber</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sizeb</span> <span class="o">=</span> <span class="n">Groupnumber</span> <span class="o">+</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sizeb</span> <span class="o">=</span> <span class="n">NumFact</span> <span class="o">+</span><span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizeb</span> <span class="o">=</span> <span class="n">sizeb</span>
+
+        <span class="n">Dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span><span class="n">N</span><span class="p">))</span>
+        <span class="n">Diff_Traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="n">N</span><span class="p">,</span><span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Compute the distance between all pair of trajectories (sum of the distances between points)</span>
+        <span class="c1"># The distance matrix is a matrix N*N</span>
+        <span class="c1"># The distance is defined as the sum of the distances between all pairs of points</span>
+        <span class="c1"># if the two trajectories differ, 0 otherwise</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>   <span class="c1">#combine all trajectories: eg N=3: 0&amp;1; 0&amp;2; 1&amp;2 (is not dependent from sequence)</span>
+            <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">N</span><span class="p">):</span>
+                <span class="n">MyDist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sizeb</span><span class="p">,</span><span class="n">sizeb</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sizeb</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sizeb</span><span class="p">):</span>
+                        <span class="n">MyDist</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">OutMatrix</span><span class="p">[</span><span class="n">sizeb</span><span class="o">*</span><span class="p">(</span><span class="n">j</span><span class="p">)</span><span class="o">+</span><span class="n">i</span><span class="p">,:]</span><span class="o">-</span><span class="n">OutMatrix</span><span class="p">[</span><span class="n">sizeb</span><span class="o">*</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">+</span><span class="n">k</span><span class="p">,:])</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">**</span><span class="mf">0.5</span> <span class="c1">#indices aan te passen</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">MyDist</span><span class="o">==</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">sizeb</span><span class="p">:</span>
+                    <span class="c1"># Same trajectory. If the number of zeros in Dist matrix is equal to</span>
+                    <span class="c1"># (NumFact+1) then the trajectory is a replica. In fact (NumFact+1) is the maximum numebr of</span>
+                    <span class="c1"># points that two trajectories can have in common</span>
+                    <span class="n">Dist</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+                    <span class="n">Dist</span><span class="p">[</span><span class="n">z</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span>
+
+                    <span class="c1"># Memorise the replicated trajectory</span>
+                    <span class="n">Diff_Traj</span><span class="p">[</span><span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span>  <span class="c1">#the z value identifies the duplicate</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Define the distance between two trajectories as</span>
+                    <span class="c1"># the minimum distance among their points</span>
+                    <span class="n">Dist</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">MyDist</span><span class="p">)</span>
+                    <span class="n">Dist</span><span class="p">[</span><span class="n">z</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">MyDist</span><span class="p">)</span>
+
+        <span class="c1">#prepare array with excluded duplicates (alternative would be deleting rows)</span>
+        <span class="n">dupli</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Diff_Traj</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">New_OutMatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(((</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="n">dupli</span><span class="p">),</span><span class="n">NumFact</span><span class="p">))</span>
+        <span class="n">New_OutFact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(((</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="n">dupli</span><span class="p">),</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Eliminate replicated trajectories in the sampled matrix</span>
+        <span class="n">ID</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">Diff_Traj</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">!=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">:</span>
+                <span class="n">New_OutMatrix</span><span class="p">[</span><span class="n">ID</span><span class="o">*</span><span class="n">sizeb</span><span class="p">:</span><span class="n">ID</span><span class="o">*</span><span class="n">sizeb</span><span class="o">+</span><span class="n">sizeb</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">OutMatrix</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span> <span class="p">:</span> <span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span> <span class="o">+</span> <span class="n">sizeb</span><span class="p">,:]</span>
+                <span class="n">New_OutFact</span><span class="p">[</span><span class="n">ID</span><span class="o">*</span><span class="n">sizeb</span><span class="p">:</span><span class="n">ID</span><span class="o">*</span><span class="n">sizeb</span><span class="o">+</span><span class="n">sizeb</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">OutFact</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span> <span class="p">:</span> <span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span> <span class="o">+</span> <span class="n">sizeb</span><span class="p">,:]</span>
+                <span class="n">ID</span><span class="o">+=</span><span class="mi">1</span>
+
+        <span class="c1"># Select in the distance matrix only the rows and columns of different trajectories</span>
+        <span class="n">Dist_Diff</span> <span class="o">=</span> <span class="n">Dist</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Diff_Traj</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">],:]</span> <span class="c1">#moet 2D matrix zijn... wis rijen ipv hou bij</span>
+        <span class="n">Dist_Diff</span> <span class="o">=</span> <span class="n">Dist_Diff</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Diff_Traj</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="c1">#moet 2D matrix zijn... wis rijen ipv hou bij</span>
+        <span class="c1">#    Dist_Diff = np.delete(Dist_Diff,np.where(Diff_Traj==-1.)[0])</span>
+        <span class="n">New_N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Diff_Traj</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Select the optimal set of trajectories</span>
+        <span class="n">Traj_Vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">New_N</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+        <span class="n">OptDist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">New_N</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">New_N</span><span class="p">):</span>                  <span class="c1">#each row in Traj_Vec</span>
+            <span class="n">Traj_Vec</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="n">m</span>
+
+            <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">r</span><span class="p">):</span>              <span class="c1">#elements in columns after first</span>
+                <span class="n">Max_New_Dist_Diff</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">New_N</span><span class="p">):</span>
+                    <span class="c1"># Check that trajectory j is not already in</span>
+                    <span class="n">Is_done</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="n">Traj_Vec</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="n">h</span><span class="p">]:</span>
+                            <span class="n">Is_done</span><span class="o">=</span><span class="bp">True</span>
+
+                    <span class="k">if</span> <span class="n">Is_done</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+                        <span class="n">New_Dist_Diff</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+                        <span class="c1">#compute distance</span>
+                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+                            <span class="n">New_Dist_Diff</span> <span class="o">=</span> <span class="n">New_Dist_Diff</span> <span class="o">+</span> <span class="p">(</span><span class="n">Dist_Diff</span><span class="p">[</span><span class="n">Traj_Vec</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">],</span><span class="n">j</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+
+                        <span class="c1"># Check if the distance is greater than the old one</span>
+                        <span class="k">if</span> <span class="n">New_Dist_Diff</span><span class="o">**</span><span class="mf">0.5</span> <span class="o">&gt;</span> <span class="n">Max_New_Dist_Diff</span><span class="p">:</span>
+                            <span class="n">Max_New_Dist_Diff</span> <span class="o">=</span> <span class="n">New_Dist_Diff</span><span class="o">**</span><span class="mf">0.5</span>
+                            <span class="n">Pippo</span> <span class="o">=</span> <span class="n">j</span>
+
+                <span class="c1"># Set the new trajectory</span>
+                <span class="n">Traj_Vec</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="n">Pippo</span>
+                <span class="n">OptDist</span><span class="p">[</span><span class="n">m</span><span class="p">,</span><span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="n">Max_New_Dist_Diff</span>
+
+        <span class="c1"># Construct optimal matrix</span>
+        <span class="n">SumOptDist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">OptDist</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># Find the maximum distance</span>
+        <span class="n">Pluto</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">SumOptDist</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">SumOptDist</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">Opt_Traj_Vec</span> <span class="o">=</span> <span class="n">Traj_Vec</span><span class="p">[</span><span class="n">Pluto</span><span class="p">[</span><span class="mi">0</span><span class="p">],:]</span>
+
+        <span class="n">OptMatrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(((</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="n">NumFact</span><span class="p">))</span>
+        <span class="n">OptOutVec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(((</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+            <span class="n">OptMatrix</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">):</span><span class="n">k</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">sizeb</span><span class="p">),:]</span><span class="o">=</span> <span class="n">New_OutMatrix</span><span class="p">[(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">Opt_Traj_Vec</span><span class="p">[</span><span class="n">k</span><span class="p">]):(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">Opt_Traj_Vec</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">+</span> <span class="n">sizeb</span><span class="p">,:]</span>
+            <span class="n">OptOutVec</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">):</span><span class="n">k</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)]</span><span class="o">=</span> <span class="n">New_OutFact</span><span class="p">[(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">Opt_Traj_Vec</span><span class="p">[</span><span class="n">k</span><span class="p">]):(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">Opt_Traj_Vec</span><span class="p">[</span><span class="n">k</span><span class="p">])</span><span class="o">+</span> <span class="n">sizeb</span><span class="p">,:]</span>
+
+        <span class="c1">#----------------------------------------------------------------------</span>
+        <span class="c1"># Compute values in the original intervals</span>
+        <span class="c1"># Optmatrix has values x(i,j) in [0, 1/(p -1), 2/(p -1), ... , 1].</span>
+        <span class="c1"># To obtain values in the original intervals [LB, UB] we compute</span>
+        <span class="c1"># LB(j) + x(i,j)*(UB(j)-LB(j))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">OptMatrix_b</span> <span class="o">=</span> <span class="n">OptMatrix</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">OptMatrix</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LB</span><span class="p">,</span> <span class="p">(</span><span class="n">sizeb</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="n">OptMatrix</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">UB</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">LB</span><span class="p">),</span> <span class="p">(</span><span class="n">sizeb</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">OptOutMatrix</span> <span class="o">=</span> <span class="n">OptMatrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">OptOutFact</span> <span class="o">=</span> <span class="n">OptOutVec</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span> <span class="o">=</span> <span class="n">OptMatrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totalnumberruns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">OptMatrix</span><span class="p">,</span> <span class="n">OptOutVec</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.Optimized_diagnostic"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.Optimized_diagnostic">[docs]</a>    <span class="k">def</span> <span class="nf">Optimized_diagnostic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Evaluate the optimized trajects in their space distirbution,</span>
+<span class="sd">        evaluation is done based on the [0-1] boundaries of the sampling</span>
+
+<span class="sd">        Returns quality measure and 2 figures to compare the optimized version</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        width : float</span>
+<span class="sd">            width of the bars in the plot (default 0.1)</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        ---------</span>
+<span class="sd">        &gt;&gt;&gt; sm.Optimized_diagnostic()</span>
+<span class="sd">        The quality of the sampling strategy changed from 0.76 with the old</span>
+<span class="sd">        strategy to 0.88 for the optimized strategy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">NumFact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span>
+        <span class="n">sizeb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sizeb</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intervals</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noptimized</span>
+        <span class="c1"># Clean the trajectories from repetitions and plot the histograms</span>
+        <span class="n">hplot</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="n">NumFact</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumFact</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+                <span class="c1"># select the first value of the factor</span>
+                <span class="n">hplot</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">OptMatrix_b</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+
+                <span class="c1"># search the second value</span>
+                <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sizeb</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">OptMatrix_b</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">OptMatrix_b</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="p">,</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="n">kk</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="n">hplot</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="n">kk</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">OptMatrix_b</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span><span class="n">wspace</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Optimized sampling&#39;</span><span class="p">)</span>
+<span class="c1">#        DimPlots = np.round(NumFact/2)</span>
+        <span class="n">DimPlots</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">NumFact</span><span class="o">/</span><span class="mf">2.</span><span class="p">))</span>
+<span class="c1">#        print hplot.shape</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumFact</span><span class="p">):</span>
+            <span class="n">ax</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">DimPlots</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1">#            n, bins, patches = ax.hist(hplot[:,i], p, color=&#39;k&#39;,ec=&#39;white&#39;)</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">hplot</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">p</span><span class="p">,)</span>
+
+            <span class="n">bwidth</span> <span class="o">=</span> <span class="n">width</span>
+            <span class="n">xlocations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span><span class="mf">1.</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">intervals</span><span class="p">)</span><span class="o">-</span><span class="n">bwidth</span><span class="o">/</span><span class="mf">2.</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">xlocations</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">bwidth</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+
+            <span class="n">majloc1</span> <span class="o">=</span> <span class="n">MaxNLocator</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">prune</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">integer</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">majloc1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tick</span> <span class="ow">in</span> <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">get_major_ticks</span><span class="p">():</span>
+                <span class="n">tick</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="o">-</span><span class="mf">0.25</span><span class="p">,</span><span class="mf">1.25</span><span class="p">])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">n</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">0.1</span><span class="p">])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">tick</span> <span class="ow">in</span> <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">get_major_ticks</span><span class="p">():</span>
+                <span class="n">tick</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.08</span><span class="p">)</span>
+
+        <span class="c1"># Plot the histogram for the original sampling strategy</span>
+        <span class="c1"># Select the matrix</span>
+        <span class="n">OrigSample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">OutMatrix</span><span class="p">[:</span><span class="n">r</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">),:]</span>
+        <span class="n">Orihplot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="n">NumFact</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumFact</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+                <span class="c1"># select the first value of the factor</span>
+                <span class="n">Orihplot</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrigSample</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+
+                <span class="c1"># search the second value</span>
+                <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">sizeb</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">OrigSample</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">OrigSample</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="p">,</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="n">kk</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="n">Orihplot</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="n">kk</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrigSample</span><span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">sizeb</span><span class="o">+</span><span class="n">ii</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Original sampling&#39;</span><span class="p">)</span>
+<span class="c1">#        DimPlots = np.round(NumFact/2)</span>
+        <span class="n">DimPlots</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">NumFact</span><span class="o">/</span><span class="mf">2.</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumFact</span><span class="p">):</span>
+            <span class="n">ax</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">DimPlots</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">Orihplot</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">p</span><span class="p">,)</span>
+
+            <span class="n">bwidth</span> <span class="o">=</span> <span class="n">width</span>
+            <span class="n">xlocations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span><span class="mf">1.</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">intervals</span><span class="p">)</span><span class="o">-</span><span class="n">bwidth</span><span class="o">/</span><span class="mf">2.</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">xlocations</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">bwidth</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+
+            <span class="n">majloc1</span> <span class="o">=</span> <span class="n">MaxNLocator</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">prune</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">integer</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">majloc1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tick</span> <span class="ow">in</span> <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">get_major_ticks</span><span class="p">():</span>
+                <span class="n">tick</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="o">-</span><span class="mf">0.25</span><span class="p">,</span><span class="mf">1.25</span><span class="p">])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">n</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">0.1</span><span class="p">])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">tick</span> <span class="ow">in</span> <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">get_major_ticks</span><span class="p">():</span>
+                <span class="n">tick</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.08</span><span class="p">)</span>
+
+        <span class="c1"># Measure the quality of the sampling strategy</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">p</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">NumSPoint</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumFact</span><span class="p">,</span><span class="n">p</span><span class="p">))</span>
+        <span class="n">NumSOrigPoint</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumFact</span><span class="p">,</span><span class="n">p</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumFact</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="c1"># For each factor and each level count the number of times the factor is on the level</span>
+                <span class="c1">#This for the new and original sampling</span>
+                <span class="n">NumSPoint</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hplot</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">levels</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">hplot</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">&lt;</span><span class="mf">1e-5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+                <span class="n">NumSOrigPoint</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Orihplot</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">levels</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">Orihplot</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">&lt;</span><span class="mf">1e-5</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="c1"># The optimal sampling has values uniformly distributed across the levels</span>
+        <span class="n">OptSampl</span> <span class="o">=</span> <span class="mf">2.</span><span class="o">*</span><span class="n">r</span><span class="o">/</span><span class="n">p</span>
+        <span class="n">QualMeasure</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="n">QualOriMeasure</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumFact</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="n">QualMeasure</span> <span class="o">=</span> <span class="n">QualMeasure</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">NumSPoint</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">OptSampl</span><span class="p">)</span>
+                <span class="n">QualOriMeasure</span> <span class="o">=</span> <span class="n">QualOriMeasure</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">NumSOrigPoint</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">OptSampl</span><span class="p">)</span>
+
+        <span class="n">QualMeasure</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">QualMeasure</span><span class="o">/</span><span class="p">(</span><span class="n">OptSampl</span><span class="o">*</span><span class="n">p</span><span class="o">*</span><span class="n">NumFact</span><span class="p">)</span>
+        <span class="n">QualOriMeasure</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">QualOriMeasure</span><span class="o">/</span><span class="p">(</span><span class="n">OptSampl</span><span class="o">*</span><span class="n">p</span><span class="o">*</span><span class="n">NumFact</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">QualMeasure</span> <span class="o">=</span> <span class="n">QualMeasure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">QualOriMeasure</span> <span class="o">=</span> <span class="n">QualOriMeasure</span>
+
+        <span class="k">print</span> <span class="s1">&#39;The quality of the sampling strategy changed from </span><span class="si">%.3f</span><span class="s1"> with the old strategy to </span><span class="si">%.3f</span><span class="s1"> for the optimized strategy&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">QualOriMeasure</span><span class="p">,</span><span class="n">QualMeasure</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.Morris_Measure_Groups"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.Morris_Measure_Groups">[docs]</a>    <span class="k">def</span> <span class="nf">Morris_Measure_Groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Output</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculates the Morris measures mu, mustar and sigma,</span>
+<span class="sd">        the calculations with groups are in beta-version!</span>
+
+<span class="sd">        Can be used for multiple outputs</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        Output : ndarray</span>
+<span class="sd">            if multiple outputs, every output in different column; the length</span>
+<span class="sd">            of the outputs is the same as the optmatrix sampled</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        SAmeas : ndarray (_ndim*number of outputs, noptimized)</span>
+<span class="sd">            matrix with the elemenary effects, the factors in the rows,</span>
+<span class="sd">            with different outputs after eachother; the columns take the</span>
+<span class="sd">            repititions</span>
+
+<span class="sd">        OutMatrix : ndarray</span>
+<span class="sd">            Matrix of the output(s) values in correspondence of each point</span>
+<span class="sd">            of each trajectory. For every output column, the factors are</span>
+<span class="sd">            calculated and [Mu*, Mu, StDev] are put in the row</span>
+<span class="sd">            When using groups, only Mu* for every group is given</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+<span class="sd">        The algorithm uses the self.OptOutMatrix and self.OptOutFact as the</span>
+<span class="sd">        input calculations, but these can be given other input combinations too</span>
+<span class="sd">        as long as it follows the Morris-method</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output2evaluate</span> <span class="o">=</span> <span class="n">Output</span>
+
+        <span class="n">NumFact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span>
+        <span class="c1">#TO CHECK!!! sample nemen als de factor-grenzen of als de 0-1 grenzen?</span>
+        <span class="c1">#vroeger sample = self.OptMatrix; ik denk self.OptMatrix_b; maakt niet uit</span>
+        <span class="n">Sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">OptOutMatrix</span>
+        <span class="n">OutFact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">OptOutFact</span>
+<span class="c1">#        p = self.intervals</span>
+        <span class="n">Group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GroupMat</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">NumGroups</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">print</span> <span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> Groups are used&#39;</span> <span class="o">%</span><span class="n">NumGroups</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">NumGroups</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">print</span> <span class="s1">&#39;No Groups are used&#39;</span>
+        <span class="k">print</span> <span class="n">NumGroups</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">NumGroups</span><span class="p">)</span>
+<span class="c1">#        Delt = p/(2.*(p-1.))</span>
+        <span class="n">Delt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span>
+
+        <span class="k">if</span> <span class="n">NumGroups</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sizea</span><span class="o">=</span><span class="n">NumGroups</span>
+            <span class="n">sizeb</span><span class="o">=</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span>
+            <span class="n">GroupMat</span><span class="o">=</span><span class="n">Group</span>
+            <span class="n">GroupMat</span> <span class="o">=</span> <span class="n">GroupMat</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="k">print</span> <span class="n">NumGroups</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sizea</span> <span class="o">=</span> <span class="n">NumFact</span>
+            <span class="n">sizeb</span><span class="o">=</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">Sample</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">sizea</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">NumOutp</span> <span class="o">=</span> <span class="n">Output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c1">#outputs combined in columns</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">NumOutp</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">Output</span><span class="o">=</span><span class="n">Output</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">Output</span><span class="o">.</span><span class="n">size</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+
+
+        <span class="c1"># For each Output</span>
+        <span class="k">if</span> <span class="n">NumGroups</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">OutMatrix</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumOutp</span><span class="o">*</span><span class="n">NumFact</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span> <span class="c1">#for every output: every factor is a line, columns are mu*,mu and std</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">OutMatrix</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumOutp</span><span class="o">*</span><span class="n">NumFact</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="c1">#for every output: every factor is a line, column is mu*</span>
+
+        <span class="n">SAmeas_out</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumOutp</span><span class="o">*</span><span class="n">NumFact</span><span class="p">,</span><span class="n">r</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumOutp</span><span class="p">):</span>
+            <span class="n">OutValues</span><span class="o">=</span><span class="n">Output</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span>
+
+            <span class="c1">#For each trajectory</span>
+            <span class="n">SAmeas</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">NumFact</span><span class="p">,</span><span class="n">r</span><span class="p">))</span> <span class="c1">#vorm afhankelijk maken van group of niet...</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+                <span class="c1"># For each step j in the trajectory</span>
+                <span class="c1"># Read the orientation matrix fact for the r-th sampling</span>
+                <span class="c1"># Read the corresponding output values</span>
+                <span class="c1"># read the line of changing factors</span>
+
+                <span class="n">Single_Sample</span> <span class="o">=</span> <span class="n">Sample</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">):</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">sizeb</span><span class="p">),:]</span>
+                <span class="n">Single_OutValues</span> <span class="o">=</span> <span class="n">OutValues</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">):</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)]</span>
+                <span class="n">Single_Facts</span> <span class="o">=</span> <span class="n">OutFact</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">):</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">sizeb</span><span class="p">)]</span> <span class="c1">#gives factor in change (or group)</span>
+
+                <span class="n">A</span> <span class="o">=</span> <span class="p">(</span><span class="n">Single_Sample</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">sizeb</span><span class="p">,:]</span><span class="o">-</span><span class="n">Single_Sample</span><span class="p">[:</span><span class="n">sizea</span><span class="p">,:])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+                <span class="n">Delta</span><span class="o">=</span><span class="n">A</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">A</span><span class="p">)]</span> <span class="c1">#AAN TE PASSEN?</span>
+
+                <span class="c1"># For each point of the fixed trajectory compute the values of the Morris function.</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sizea</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">NumGroups</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1">#work with groups</span>
+                        <span class="n">Auxfind</span><span class="o">=</span><span class="n">A</span><span class="p">[:,</span><span class="n">j</span><span class="p">]</span>
+                        <span class="n">Change_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Auxfind</span><span class="p">)</span><span class="o">&gt;</span><span class="mf">1e-010</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">gk</span> <span class="ow">in</span> <span class="n">Change_factor</span><span class="p">:</span>
+                            <span class="n">SAmeas</span><span class="p">[</span><span class="n">gk</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">Single_OutValues</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">Single_OutValues</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="n">Delt</span><span class="p">)</span>   <span class="c1">#nog niet volledig goe</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">Delta</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                            <span class="n">SAmeas</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">Single_Facts</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Single_OutValues</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">Single_OutValues</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">/</span><span class="n">Delt</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">SAmeas</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">Single_Facts</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Single_OutValues</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">Single_OutValues</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="n">Delt</span>
+
+            <span class="c1"># Compute Mu AbsMu and StDev</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">SAmeas</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="n">AbsMu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NumFact</span><span class="p">)</span>
+                <span class="n">Stdev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NumFact</span><span class="p">)</span>
+                <span class="n">Mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NumFact</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NumFact</span><span class="p">):</span>
+                    <span class="n">SAm</span><span class="o">=</span><span class="n">SAmeas</span><span class="p">[</span><span class="n">j</span><span class="p">,:]</span>
+                    <span class="n">SAm</span><span class="o">=</span><span class="n">SAm</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">SAm</span><span class="p">)]</span>
+                    <span class="n">rr</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">(</span><span class="n">SAm</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+                    <span class="n">AbsMu</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">SAm</span><span class="p">))</span><span class="o">/</span><span class="n">rr</span>
+                    <span class="k">if</span> <span class="n">NumGroups</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">Mu</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">SAm</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                        <span class="n">Stdev</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">SAm</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#ddof: /N-1 instead of /N</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">AbsMu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">SAmeas</span><span class="p">),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">r</span>
+                <span class="k">if</span> <span class="n">NumGroups</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">Mu</span> <span class="o">=</span> <span class="n">SAmeas</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">Stdev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">SAmeas</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#ddof: /N-1 instead of /N</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">Stdev</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NumFact</span><span class="p">)</span>
+                    <span class="n">Mu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">NumFact</span><span class="p">)</span>
+
+            <span class="n">OutMatrix</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="p">:</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="o">+</span><span class="n">NumFact</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="n">AbsMu</span>
+            <span class="k">if</span> <span class="n">NumGroups</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">OutMatrix</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="p">:</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="o">+</span><span class="n">NumFact</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="n">Mu</span>
+                <span class="n">OutMatrix</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="p">:</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="o">+</span><span class="n">NumFact</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span><span class="n">Stdev</span>
+
+            <span class="n">SAmeas_out</span><span class="p">[</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="p">:</span><span class="n">k</span><span class="o">*</span><span class="n">NumFact</span><span class="o">+</span><span class="n">NumFact</span><span class="p">,:]</span><span class="o">=</span><span class="n">SAmeas</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">SAmeas_out</span> <span class="o">=</span> <span class="n">SAmeas_out</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">OutMatrix</span> <span class="o">=</span> <span class="n">OutMatrix</span>
+            <span class="c1"># if no groups</span>
+            <span class="k">if</span> <span class="n">NumGroups</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mustar</span> <span class="o">=</span> <span class="n">OutMatrix</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">OutMatrix</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">OutMatrix</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span> <span class="c1">#for every output: every factor is a line, columns are mu*,mu and std</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="s1">&#39;Different outputs are used, so split them in comparing the output, by using outputid&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mustar</span> <span class="o">=</span> <span class="n">OutMatrix</span><span class="p">[:]</span>
+
+
+
+        <span class="k">return</span> <span class="n">SAmeas_out</span><span class="p">,</span> <span class="n">OutMatrix</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.runTestModel"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.runTestModel">[docs]</a>    <span class="k">def</span> <span class="nf">runTestModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ai</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Run a testmodel</span>
+
+<span class="sd">        Use a testmodel to get familiar with the method and try things out. The</span>
+<span class="sd">        implemented model is the G Sobol function: testfunction with</span>
+<span class="sd">        analytical solution, moire information, see [M3]_</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        ai : list</span>
+<span class="sd">            list with the input factors (equal size as number of factors)</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        ---------</span>
+<span class="sd">        &gt;&gt;&gt; ai=[78, 12, 0.5, 2, 97, 33]</span>
+<span class="sd">        &gt;&gt;&gt; Xi = [(0.0,1.0,r&#39;$X_1$&#39;),(0.0,1.0,r&#39;$X_2$&#39;),(0.0,1.0,r&#39;$X_3$&#39;),</span>
+<span class="sd">                  (0.0,1.0,r&#39;$X_4$&#39;),(0.0,1.0,r&#39;$X_5$&#39;),(0.0,1.0,r&#39;$X_6$&#39;)]</span>
+<span class="sd">        &gt;&gt;&gt; #set up the morris screening class</span>
+<span class="sd">        &gt;&gt;&gt; sm = MorrisScreening(Xi,ModelType = &#39;testmodel&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; #Get an optimized set of trajectories</span>
+<span class="sd">        &gt;&gt;&gt; OptMatrix, OptOutVec = sm.Optimized_Groups(nbaseruns=100,</span>
+<span class="sd">                                                       intervals = 4,</span>
+<span class="sd">                                                       noptimized=4,</span>
+<span class="sd">                                                       Delta = 0.4)</span>
+<span class="sd">        &gt;&gt;&gt; #compare the selected trajects with the general</span>
+<span class="sd">        &gt;&gt;&gt; sm.Optimized_diagnostic(width=0.15)</span>
+<span class="sd">        &gt;&gt;&gt; #run a testmodel and get the outputs</span>
+<span class="sd">        &gt;&gt;&gt; sm.runTestModel(ai)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sm</span><span class="o">.</span><span class="n">OptOutMatrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">OptOutMatrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+             <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">analgfunc</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span><span class="n">sm</span><span class="o">.</span><span class="n">OptOutMatrix</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span>
+
+        <span class="n">SAmeas_out</span><span class="p">,</span> <span class="n">OutMatrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Morris_Measure_Groups</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">print</span> <span class="s1">&#39;Higher values of ai correspond to lower importance of Xi </span><span class="se">\n</span><span class="s1">&#39;</span>
+
+        <span class="c1">#Analytical to compare -&gt; G</span>
+        <span class="n">Vi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+            <span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="n">ai</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">VTi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+            <span class="n">Vj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">Vi</span><span class="p">,</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="mf">1.</span><span class="p">)</span>
+            <span class="n">VTi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Vj</span>
+        <span class="n">Vtot</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+            <span class="n">Vtot</span> <span class="o">=</span> <span class="n">Vtot</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">Vtot</span> <span class="o">=</span> <span class="n">Vtot</span> <span class="o">-</span><span class="mf">1.</span>
+
+        <span class="k">print</span> <span class="s1">&#39;Morris gives only qualitive measures of importance, </span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">print</span> <span class="s1">&#39;a correspondance between STi and mustar is expected </span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">print</span> <span class="s1">&#39;and compared here </span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">print</span> <span class="s1">&#39; </span><span class="se">\n</span><span class="s1">&#39;</span>
+
+        <span class="k">print</span> <span class="s1">&#39;Analytical Solution for STi: </span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">print</span> <span class="n">VTi</span><span class="o">/</span><span class="n">Vtot</span>
+        <span class="k">print</span> <span class="s1">&#39;The Morris mu* results: </span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">mustar</span>
+
+        <span class="k">print</span> <span class="s1">&#39;A barplot is generated...&#39;</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotmustar</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Morris screening result&#39;</span><span class="p">)</span>
+        <span class="n">fig2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">fig2</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax2</span><span class="p">,</span> <span class="n">VTi</span><span class="o">/</span><span class="n">Vtot</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>
+                      <span class="n">addval</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Analytical result&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MorrisScreening.latexresults"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.latexresults">[docs]</a>    <span class="k">def</span> <span class="nf">latexresults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Morristable.tex&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Print Results in a &quot;deluxetable&quot; Latex</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        outputid : int</span>
+<span class="sd">            teh output to use when evaluation for multiple outputs are calculated</span>
+<span class="sd">        name : str.tex</span>
+<span class="sd">            output file name; use .tex extension in the name</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">print</span> <span class="s1">&#39;tex: The </span><span class="si">%d</span><span class="s1"> th output evaluation criterion is used&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">mu2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+        <span class="n">mustar2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mustar</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+        <span class="n">sigma2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">justs</span><span class="o">=</span><span class="s1">&#39;lccc&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;Morris evaluation criteria&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;tab:morris1tot&quot;</span><span class="p">)</span>
+
+        <span class="n">t</span><span class="o">.</span><span class="n">add_header_row</span><span class="p">([</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;$\mu$&#39;</span><span class="p">,</span> <span class="s1">&#39;$\mu^*$&#39;</span><span class="p">,</span> <span class="s1">&#39;$\sigma$&#39;</span><span class="p">])</span>
+        <span class="n">col1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">[:]</span>
+        <span class="n">col2</span> <span class="o">=</span> <span class="n">mu2use</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">col3</span> <span class="o">=</span> <span class="n">mustar2use</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">col4</span> <span class="o">=</span> <span class="n">sigma2use</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="n">t</span><span class="o">.</span><span class="n">add_data</span><span class="p">([</span><span class="n">col1</span><span class="p">,</span><span class="n">col2</span><span class="p">,</span><span class="n">col3</span><span class="p">,</span><span class="n">col4</span><span class="p">],</span> <span class="n">sigfigs</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#,col3</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">print_table</span><span class="p">(</span><span class="n">fout</span><span class="p">)</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s1">&#39;Latex Results latex table file saved in directory </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MorrisScreening.txtresults"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.txtresults">[docs]</a>    <span class="k">def</span> <span class="nf">txtresults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Morrisresults.txt&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Results in txt file to load in eg excel</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        outputid : int</span>
+<span class="sd">            the output to use when evaluation for multiple outputs are calculated</span>
+<span class="sd">        name : str.txt</span>
+<span class="sd">            output file name; use .txt extension in the name</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">print</span> <span class="s1">&#39;txt: The </span><span class="si">%d</span><span class="s1"> th output evaluation criterion is used&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">mu2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+        <span class="n">mustar2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mustar</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+        <span class="n">sigma2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Par </span><span class="se">\t</span><span class="s1"> mu </span><span class="se">\t</span><span class="s1"> mustar </span><span class="se">\t</span><span class="s1"> sigma </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+            <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="se">\t</span><span class="s1"> </span><span class="si">%.8f</span><span class="s1"> </span><span class="se">\t</span><span class="s1">  </span><span class="si">%.8f</span><span class="s1"> </span><span class="se">\t</span><span class="s1">  </span><span class="si">%.8f</span><span class="s1"> </span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parmap</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                                          <span class="n">mu2use</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                                          <span class="n">mustar2use</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                                                          <span class="n">sigma2use</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s1">&#39;txt Results file saved in directory </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.plotmu"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.plotmu">[docs]</a>    <span class="k">def</span> <span class="nf">plotmu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">addval</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">outputid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot a barchart of the given mu</span>
+<span class="sd">        </span>
+<span class="sd">        mu is a measure for the first-order effect on the model output. However</span>
+<span class="sd">        the use of mu can be tricky because if the model is non-monotonic</span>
+<span class="sd">        negative elements can be in the parameter distribution and by taking the</span>
+<span class="sd">        mean of the variance (= mu!) the netto effect is cancelled out! Should</span>
+<span class="sd">        always be used together with plotsigma in order to see whether higher</span>
+<span class="sd">        order effects are occuring, high sigma values with low mu values can </span>
+<span class="sd">        be caused by non-monotonicity of functions. In order to check this use</span>
+<span class="sd">        plotmustar and/or plotmustarsigma</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        width : float (0-1)</span>
+<span class="sd">            width of the bars in the barchart</span>
+<span class="sd">        addval : bool</span>
+<span class="sd">            if True, the morris mu values are added to the graph</span>
+<span class="sd">        sortit : bool</span>
+<span class="sd">            if True, larger values (in absolute value) are plotted closest to</span>
+<span class="sd">            the y-axis</span>
+<span class="sd">        outputid : int</span>
+<span class="sd">            the output to use whe multiple are compared; starts with 0</span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            passed to the matplotlib.bar</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fig : matplotlib.figure.Figure object</span>
+<span class="sd">            figure containing the output</span>
+<span class="sd">        ax1 : axes.AxesSubplot object</span>
+<span class="sd">            the subplot</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span>
+                      <span class="n">addval</span> <span class="o">=</span> <span class="n">addval</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">r&#39;$\mu$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.plotmustar"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.plotmustar">[docs]</a>    <span class="k">def</span> <span class="nf">plotmustar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">addval</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">outputid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot a barchart of the given mustar</span>
+<span class="sd">        </span>
+<span class="sd">        mu* is a measure for the first-order effect on the model output.</span>
+<span class="sd">        By taking the average of the absolute values of the parameter</span>
+<span class="sd">        distribution, the absolute effect on the output can be calculated. This</span>
+<span class="sd">        is very useful when you are working with non-monotonic functions. The</span>
+<span class="sd">        drawback is that you lose information about the direction of influence </span>
+<span class="sd">        (is this factor influencing the output in a positive or negative way?).</span>
+<span class="sd">        For the direction of influence use plotmustar!</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        width : float (0-1)</span>
+<span class="sd">            width of the bars in the barchart</span>
+<span class="sd">        addval : bool</span>
+<span class="sd">            if True, the morris values are added to the graph</span>
+<span class="sd">        sortit : bool</span>
+<span class="sd">            if True, larger values (in absolute value) are plotted closest to</span>
+<span class="sd">            the y-axis</span>
+<span class="sd">        outputid : int</span>
+<span class="sd">            the output to use whe multiple are compared; starts with 0</span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            passed to the matplotlib.bar; width is already used</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fig: matplotlib.figure.Figure object</span>
+<span class="sd">            figure containing the output</span>
+<span class="sd">        ax1: axes.AxesSubplot object</span>
+<span class="sd">            the subplot</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mustar</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span>
+                      <span class="n">addval</span> <span class="o">=</span> <span class="n">addval</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">r&#39;$\mu*$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.plotsigma"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.plotsigma">[docs]</a>    <span class="k">def</span> <span class="nf">plotsigma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">addval</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">outputid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot a barchart of the given sigma</span>
+<span class="sd">        </span>
+<span class="sd">        sigma is a measure for the higher order effects (e.g. curvatures and </span>
+<span class="sd">        interactions). High sigma values typically occurs when for example </span>
+<span class="sd">        parameters are correlated, the model is non linear,... The sum of all</span>
+<span class="sd">        these effects is sigma. For linear models without any correlation sigma</span>
+<span class="sd">        should be approximately zero.        </span>
+<span class="sd">        </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        width : float (0-1)</span>
+<span class="sd">            width of the bars in the barchart</span>
+<span class="sd">        addval : bool</span>
+<span class="sd">            if True, the morris values are added to the graph</span>
+<span class="sd">        sortit : bool</span>
+<span class="sd">            if True, larger values (in absolute value) are plotted closest to</span>
+<span class="sd">            the y-axis</span>
+<span class="sd">        outputid : int</span>
+<span class="sd">            the output to use whe multiple are compared; starts with 0</span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            passed to the matplotlib.bar</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fig : matplotlib.figure.Figure object</span>
+<span class="sd">            figure containing the output</span>
+<span class="sd">        ax1 : axes.AxesSubplot object</span>
+<span class="sd">            the subplot</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span>
+                      <span class="n">addval</span> <span class="o">=</span> <span class="n">addval</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">r&#39;$\sigma$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span></div>
+
+<div class="viewcode-block" id="MorrisScreening.plotmustarsigma"><a class="viewcode-back" href="../../sensitivity.html#pystran.MorrisScreening.plotmustarsigma">[docs]</a>    <span class="k">def</span> <span class="nf">plotmustarsigma</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">zoomperc</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">loc</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot the mu* vs sigma chart to interpret the combined effect of both.</span>
+<span class="sd">        </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        zoomperc : float (0-1)</span>
+<span class="sd">            the percentage of the output range to show in the zoomplot,</span>
+<span class="sd">            if &#39;none&#39;, no zoom plot is added</span>
+<span class="sd">        loc : int</span>
+<span class="sd">            matplotlib.pyplot.legend: location code (0-10)</span>
+<span class="sd">        outputid : int</span>
+<span class="sd">            the output to use whe multiple are compared; starts with 0</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        fig : matplotlib.figure.Figure object</span>
+<span class="sd">            figure containing the output</span>
+<span class="sd">        ax1 : axes.AxesSubplot object</span>
+<span class="sd">            the subplot</span>
+<span class="sd">        txtobjects : list of textobjects</span>
+<span class="sd">            enbales the ad hoc replacement of labels when overlapping</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        Visualization as proposed by [M2]_</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">mustar2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mustar</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+        <span class="n">sigma2use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">[</span><span class="n">outputid</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:(</span><span class="n">outputid</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">axs</span><span class="p">,</span> <span class="n">txtobjects</span> <span class="o">=</span> <span class="n">scatterwithtext</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">mustar2use</span><span class="p">,</span> <span class="n">sigma2use</span><span class="p">,</span>
+                                          <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="s1">&#39;ks&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">8</span><span class="p">)</span>
+
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">r&#39;$\mu^*$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">r&#39;$\sigma$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;0.75&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;0.75&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">mustar2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">mustar2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">0.1</span><span class="p">))</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">sigma2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="mf">0.1</span><span class="p">))</span>
+
+        <span class="n">majloc1</span> <span class="o">=</span> <span class="n">MaxNLocator</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">prune</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">majloc1</span><span class="p">)</span>
+        <span class="n">majloc2</span> <span class="o">=</span> <span class="n">MaxNLocator</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">majloc2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">zoomperc</span> <span class="o">!=</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+            <span class="c1">#the zooming box size is ad hoc and can be improved</span>
+            <span class="n">axins</span> <span class="o">=</span> <span class="n">zoomed_inset_axes</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">zoomperc</span><span class="o">/</span><span class="mf">2.5</span><span class="p">),</span>
+                                      <span class="n">loc</span> <span class="o">=</span> <span class="n">loc</span><span class="p">)</span>
+
+            <span class="n">axins</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mustar2use</span><span class="p">,</span> <span class="n">sigma2use</span><span class="p">,</span> <span class="s1">&#39;ks&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">transOffset2</span> <span class="o">=</span> <span class="n">offset_copy</span><span class="p">(</span><span class="n">axins</span><span class="o">.</span><span class="n">transData</span><span class="p">,</span> <span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">(),</span>
+                                       <span class="n">x</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.10</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s1">&#39;inches&#39;</span><span class="p">)</span>
+            <span class="c1">#plot in the subplot</span>
+            <span class="n">ct2</span><span class="o">=</span><span class="mi">0</span>
+            <span class="n">txtobjects2</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mustar2use</span><span class="p">,</span> <span class="n">sigma2use</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">mustar2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="n">zoomperc</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">sigma2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="n">zoomperc</span><span class="p">:</span>
+                    <span class="n">axins</span><span class="o">.</span><span class="n">plot</span><span class="p">((</span><span class="n">x</span><span class="p">,),(</span><span class="n">y</span><span class="p">,),</span> <span class="s1">&#39;ks&#39;</span><span class="p">,</span> <span class="n">markersize</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+                    <span class="n">ls</span> <span class="o">=</span> <span class="n">axins</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">[</span><span class="n">ct2</span><span class="p">],</span>
+                                  <span class="n">transform</span><span class="o">=</span><span class="n">transOffset2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+                    <span class="n">txtobjects2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span>
+                <span class="n">ct2</span><span class="o">+=</span><span class="mi">1</span>
+
+            <span class="c1">#zoomplot with labels right</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+            <span class="c1">#set the limits of the zoom plot</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">mustar2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="n">zoomperc</span><span class="p">))</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sigma2use</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">*</span><span class="n">zoomperc</span><span class="p">))</span>
+            <span class="c1">#only minor number of ticks for cleaner overview</span>
+            <span class="n">majloc3</span> <span class="o">=</span> <span class="n">MaxNLocator</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">prune</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">majloc3</span><span class="p">)</span>
+            <span class="n">majloc4</span> <span class="o">=</span> <span class="n">MaxNLocator</span><span class="p">(</span><span class="n">nbins</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">prune</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">majloc4</span><span class="p">)</span>
+            <span class="c1">#smaller size for the ticklabels (different is actually not needed)</span>
+            <span class="k">for</span> <span class="n">tickx</span> <span class="ow">in</span> <span class="n">axins</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">get_major_ticks</span><span class="p">():</span>
+                <span class="n">tickx</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">axins</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">get_majorticklabels</span><span class="p">():</span>
+                <span class="n">label</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+                <span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;vertical&#39;</span><span class="p">)</span>
+
+            <span class="c1">#create the subarea-plot in main frame and connect</span>
+            <span class="n">mark_inset</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">axins</span><span class="p">,</span> <span class="n">loc1</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">loc2</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s1">&#39;0.8&#39;</span><span class="p">)</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;0.85&#39;</span><span class="p">)</span>
+            <span class="n">axins</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">linestyle</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;0.85&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span><span class="p">,</span> <span class="n">txtobjects</span></div>
+
+    <span class="k">def</span> <span class="nf">plot3partbar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        gebruikt voor paper en hier nog in te brengen..</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span></div>
+
+
+<span class="c1">#####teststuff</span>
+<span class="c1">#####################</span>
+<span class="c1">#ai=[78, 12, 0.5, 2, 97, 33]</span>
+<span class="c1">#ai=[50, 45, 52, 68, 51, 63]</span>
+<span class="c1">#Xi = [(0.0,1.0,r&#39;$X_1$&#39;),(0.0,1.0,r&#39;$X_2$&#39;),(0.0,1.0,r&#39;$X_3$&#39;),(0.0,1.0,r&#39;$X_4$&#39;),</span>
+<span class="c1">#      (0.0,1.0,r&#39;$X_5$&#39;),(0.0,1.0,r&#39;$X_6$&#39;)]</span>
+<span class="c1">#</span>
+<span class="c1">#sm = MorrisScreening(Xi,ModelType = &#39;testmodel&#39;)</span>
+<span class="c1">#OptMatrix, OptOutVec = sm.Optimized_Groups(nbaseruns=100,</span>
+<span class="c1">#                                           intervals = 4, noptimized=4, Delta = 0.4)</span>
+<span class="c1">#sm.Optimized_diagnostic(width=0.15)</span>
+<span class="c1">#sm.runTestModel(ai)</span>
+
+<span class="c1">##run the model</span>
+<span class="c1">#output = np.zeros((sm.OptOutMatrix.shape[0],1))</span>
+<span class="c1">#for i in range(sm.OptOutMatrix.shape[0]):</span>
+<span class="c1">#     output[i,:] = analgfunc(ai,sm.OptOutMatrix[i,:])</span>
+<span class="c1">#output2 = output*2</span>
+<span class="c1">#</span>
+<span class="c1">##two outputs</span>
+<span class="c1">#sm.Morris_Measure_Groups(np.hstack((output,np.sqrt(output)*2)))</span>
+
+<span class="c1">#fig1,ax1 =sm.plotmu(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="c1">#sm.plotmustar(outputid = 1,ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="c1">##sm.plotsigma(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="c1">#fig, axs1, txtobjects = sm.plotmustarsigma(zoomperc = 0.05, outputid = 1, loc = 2)</span>
+<span class="c1">##results in txt file</span>
+<span class="c1">#sm.txtresults(name=&#39;MorrisTestOut.txt&#39;)</span>
+<span class="c1">##results in tex-table</span>
+<span class="c1">#sm.latexresults(name=&#39;MorrisTestOut.tex&#39;)</span>
+
+<span class="c1">#plt.figure()</span>
+<span class="c1">#plt.bar(np.linspace(0,6,6),sm.mustar)</span>
+<span class="c1">#plt.figure()</span>
+<span class="c1">#plt.bar(np.linspace(0,6,6),sm.mu)</span>
+
+<span class="c1">#def plotbar(Outmatrix,factornames=[]):</span>
+<span class="c1">#    ind = np.arange(Outmatrix.shape[0])</span>
+<span class="c1">#</span>
+<span class="c1">#    fig = plt.figure()</span>
+<span class="c1">#    ax = fig.add_subplot(111)</span>
+<span class="c1">#    width = 0.35</span>
+<span class="c1">#    ax.bar(ind, Outmatrix[:,0],width)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#    ax.set_ylabel(r&#39;$\mu$*&#39;)</span>
+<span class="c1">#    ax.set_xlabel(r&#39;Factors&#39;)</span>
+<span class="c1">#    ax.set_xticks(ind+width/2)</span>
+<span class="c1">#    if len(factornames)&gt;0:</span>
+<span class="c1">#        ax.set_xticklabels( factornames )</span>
+
+<span class="c1">##2##</span>
+<span class="c1">#Xi = [(0.0,6.0,r&#39;$X_1$&#39;),(0.2,0.8,r&#39;$X_2$&#39;),(0.0,1.0,r&#39;$X_3$&#39;),(0.0,1.0,r&#39;$X_4$&#39;),</span>
+<span class="c1">#      (1.0,2.0,r&#39;$X_5$&#39;),(2.0,10.0,r&#39;$X_6$&#39;),(0.0,1.0,r&#39;$X_7$&#39;),(0.0,1.0,r&#39;$X_8$&#39;)]</span>
+<span class="c1">#sm = MorrisScreening(Xi)</span>
+<span class="c1">#OptMatrix, OptOutVec = sm.Optimized_Groups(nbaseruns=1000,</span>
+<span class="c1">#                                           intervals = 4, noptimized=20)</span>
+<span class="c1">#sm.Optimized_diagnostic(width=0.15)</span>
+
+<span class="c1">#OM TE LOPEN:</span>
+<span class="c1">#pre</span>
+<span class="c1">#ParMatrix, OptOutVec=Optimized_Groups(NumFact,LB,UB,N=1000,p=4,r=Nr,GroupMat=np.array([]),Diagnostic=0)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, S. Van Hoey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

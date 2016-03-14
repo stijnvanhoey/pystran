@@ -1,0 +1,1700 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pystran.evaluationfunctions &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pystran.evaluationfunctions</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author: VHOEYS</span>
+<span class="sd">development supported by Flemish Institute for Technological Research (VITO)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+
+<span class="c1">#from utilities.FDC import *</span>
+
+<span class="c1">#if evaluation: minimization</span>
+<span class="c1">#If likelihood: maximization (openen in RSA/GLUE/..)</span>
+
+<span class="k">class</span> <span class="nc">FlowAnalysis</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Class for analyzing the flow characteristics</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">=</span> <span class="n">observed</span>
+
+<div class="viewcode-block" id="Evaluation"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation">[docs]</a><span class="k">class</span> <span class="nc">Evaluation</span><span class="p">(</span><span class="n">FlowAnalysis</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Class for deriving different evaluation criteria.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    --------------</span>
+<span class="sd">    ..  [E1] Gupta H.V., Sorooshian S., Yapo P.O.(1998), Toward improved</span>
+<span class="sd">        calibration of hydrologic models: Multiple and noncommensurable</span>
+<span class="sd">        measures of information, Water Resources Research,pp 751-763</span>
+<span class="sd">    ..  [E2] H. Hauduc, M. B. Neumann, D. Muschalla, V. Gamerith, S. Gillot</span>
+<span class="sd">        and P.A. Vanrolleghem (2011), Towards quantitative quality criteria</span>
+<span class="sd">        to evaluate simulation results in wastewater treatment – A critical</span>
+<span class="sd">        review. Proceedings 8th symposium on systems analysis and integrated</span>
+<span class="sd">        assessment (Watermatex 2011)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">modelled</span><span class="p">):</span>
+         <span class="n">FlowAnalysis</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+
+         <span class="k">if</span> <span class="n">modelled</span><span class="o">.</span><span class="n">shape</span> <span class="o">&lt;&gt;</span> <span class="n">observed</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Modelled and observed timeseries need </span><span class="se">\</span>
+<span class="s1">                                 to be of the same size&#39;</span><span class="p">)</span>
+
+         <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span> <span class="o">=</span> <span class="n">modelled</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">infodict</span><span class="p">()</span>
+
+         <span class="k">print</span> <span class="s1">&#39;Criteria suited for model minimization, use optim=True to be sure&#39;</span>
+
+<div class="viewcode-block" id="Evaluation.infodict"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.infodict">[docs]</a>    <span class="k">def</span> <span class="nf">infodict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Prepares information dictionary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="o">=</span><span class="p">{}</span>
+        <span class="c1">#CAT 1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;PDIFF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Peak Difference&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;PEP&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Percent Error In Peak&#39;</span>
+        <span class="c1">#CAT 2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;ME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MAE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Absolute Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Squared Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MSLE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Squared Logarithm Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;AME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Absolute Maximum Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MSSoE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Sqaured sorted Errors&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MSDE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Square Derivative Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RMSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Root Mean Square Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RRMSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Relative Root Mean Square Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RMSE_log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Root Mean Square Error with log values&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RMSE_boxcox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Root Mean Square Error with boxcox values&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;R4MS4E&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Root 4 Mean Square 4 Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;SSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Sum of squared Errors&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Number of Sign Changes of the residuals&#39;</span>
+        <span class="c1">#CAT 3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MPE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Percent Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MRE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Relative Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MARE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Absolute Relative Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;SARE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Sum of Absolute Relative Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MeAPE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Median Absolute Percent Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MSRE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Square Relative Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MAPE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean Absolute Percent Error&#39;</span>
+        <span class="c1">#CAT 4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;PBIAS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Percent Bias&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;APBIAS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Absolute Percent Bias&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;BIAS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Percent Bias&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RVE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Relative Volume Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RMAE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Relative Mean Absolute Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;ThInC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Theils Inequality Coefficient&#39;</span>
+        <span class="c1">#CAT 5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;TMC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Total Mass Controller&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;CrBal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Balance Criterion &#39;</span>
+        <span class="c1">#CAT 6</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash-Sutcliffe Efficiency criterion&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSE_sqrt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash-Sutcliffe Efficiency criterion with root values&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSE_log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash-Sutcliffe Efficiency criterion with logarithmic values&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSE_boxcox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash-Sutcliffe Efficiency criterion with boxcox transformed values&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RAE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Relative Absolute Error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RSR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;RMSE-observation standard deviation ratio&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;IA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;index of agreement&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;PI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Coefficient of persistence&#39;</span>
+        <span class="c1">#CAT 7</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;RFLAUT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;First (or higher) lag autocorrelation&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;SFDCE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Calculate the Slope of the flow duration curve error&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;LowFDCE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Flow Duration Curve based low flow criterion&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;highFDCE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Flow Duration Curve based high flow criterion&#39;</span>
+        <span class="c1">#CAT 8</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSE_BIAS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash-Sutcliffe &amp; BIAS&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSE_FDClow&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash-Sutcliffe &amp; Flow Duration Curve low flows&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NSE_FDChigh&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash-Sutcliffe &amp; Flow Duration Curve high flows&#39;</span></div>
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 1: Single event statistics:</span>
+<span class="c1">#    In case modelling objectives require accurate simulation of events (e.g.:</span>
+<span class="c1">#    handle storm flows, toxic peaks), criteria are needed to characterise the</span>
+<span class="c1">#    goodness-of-fit of the model for this event. The single event statistics</span>
+<span class="c1">#    peak difference (Gupta et al., 1998) and percent error in peak</span>
+<span class="c1">#    (Dawson et al., 2007) aim at characterising the difference between</span>
+<span class="c1">#    the maximum observed and the maximum modelled value.</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.PDIFF"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.PDIFF">[docs]</a>    <span class="k">def</span> <span class="nf">PDIFF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Peak Difference</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        This criterion evaluate how well the highest modelled value matches</span>
+<span class="sd">        the highest observed value in percent. However, it does not take into</span>
+<span class="sd">        account whether the max(Oi) and max(Pi) occur at the same time-step i.</span>
+
+<span class="sd">        Consequently, in case of multiple events on the same time-series,</span>
+<span class="sd">        first the single events must be extracted from the whole time series</span>
+<span class="sd">        to have less chance to mix up with peaks from another event.</span>
+
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: single event</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">OF</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.PEP"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.PEP">[docs]</a>    <span class="k">def</span> <span class="nf">PEP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Percent Error In Peak</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        This criterion evaluate how well the highest modelled value matches</span>
+<span class="sd">        the highest observed value in percent. However, it does not take into</span>
+<span class="sd">        account whether the max(Oi) and max(Pi) occur at the same time-step i.</span>
+
+<span class="sd">        Consequently, in case of multiple events on the same time-series,</span>
+<span class="sd">        first the single events must be extracted from the whole time series</span>
+<span class="sd">        to have less chance to mix up with peaks from another event.</span>
+
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: single event</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">))</span><span class="o">*</span><span class="mf">100.</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">OF</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 2: Absolute criteria:</span>
+<span class="c1">#    The absolute criteria are based on the</span>
+<span class="c1">#    sum of residuals (difference between observed Oi and predicted Pi values</span>
+<span class="c1">#    respectively at time step i), generally averaged by the number of data. A</span>
+<span class="c1">#    low value of this criterion means a good agreement between observation</span>
+<span class="c1">#    and simulation (with γ an exponent).</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.ME"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.ME">[docs]</a>    <span class="k">def</span> <span class="nf">ME</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Error</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean of residuals allows highlighting the existence of systematic</span>
+<span class="sd">        bias, i.e. characteristic of a model leading to systematic over- or</span>
+<span class="sd">        under-prediction [E1]_. However, with this criterion errors</span>
+<span class="sd">        can compensate each other, so no information on the magnitude of</span>
+<span class="sd">        the errors is obtained.</span>
+
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria</span>
+
+<span class="sd">        References</span>
+<span class="sd">        -----------</span>
+<span class="sd">        ..  [E3] Power M. (1993) The predictive validation of ecological and</span>
+<span class="sd">            environmental models. Ecological Modelling, 68(1-2), 33-50.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">OF</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MAE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MAE">[docs]</a>    <span class="k">def</span> <span class="nf">MAE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Absolute Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean absolute error indicates the average magnitude of the model</span>
+<span class="sd">        error (accuracy) [E4]_. Taking the absolute value</span>
+<span class="sd">        avoids error compensation, but does not indicate the direction of</span>
+<span class="sd">        the deviation.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria</span>
+
+<span class="sd">        References</span>
+<span class="sd">        -----------</span>
+<span class="sd">        ..  [E4] Willmott C.J., Ackleson S.G., Davis R.E., Feddema J.J.,</span>
+<span class="sd">            Klink K.M., Legates D.R., O&#39;Donnell J. and Rowe C.M. (1985)</span>
+<span class="sd">            Statistics for the evaluation and comparison of models.</span>
+<span class="sd">            Journal of Geophysical Research, 90(C5), 8995-9005.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MSE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MSE">[docs]</a>    <span class="k">def</span> <span class="nf">MSE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Squared Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean square error avoids error compensations and</span>
+<span class="sd">        emphasises high errors [E4]_.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MSLE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MSLE">[docs]</a>    <span class="k">def</span> <span class="nf">MSLE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Squared Logarithm Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean square logarithm error is the sum of the squares of</span>
+<span class="sd">        the differences of the natural logarithm of the predicted and</span>
+<span class="sd">        observed value [E5]_. It emphasises low magnitude</span>
+<span class="sd">        errors.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria</span>
+
+<span class="sd">        References</span>
+<span class="sd">        -----------</span>
+<span class="sd">        ..  [E5] Dawson C.W., Abrahart R.J. and See L.M. (2010) HydroTest:</span>
+<span class="sd">            Further development of a web resource for the standardised</span>
+<span class="sd">            assessment of hydrological models. Environmental Modelling and</span>
+<span class="sd">            Software, 25(11), 1481-1482.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.AME"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.AME">[docs]</a>    <span class="k">def</span> <span class="nf">AME</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Absolute Maximum Error</span>
+
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The absolute maximum error indicates the maximum error of the model</span>
+<span class="sd">        [E1]_. This criterion is very sensitive to outliers</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+
+<div class="viewcode-block" id="Evaluation.MSSoE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MSSoE">[docs]</a>    <span class="k">def</span> <span class="nf">MSSoE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Sqaured sorted Errors</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean square error of sorted errors is calculated based on sorted</span>
+<span class="sd">        observed and predicted data (van Griensven and Bauwens, 2003).</span>
+<span class="sd">        Observations and predictions are sorted independently one from the</span>
+<span class="sd">        other. The sorted series are then compared (comparison of their</span>
+<span class="sd">        cumulative distributions) and it is evaluated whether the model</span>
+<span class="sd">        reproduces the same distribution as the observed data.</span>
+
+<span class="sd">        The time of occurrence of a given value of the variable is not</span>
+<span class="sd">        accounted for in the MSSoE method.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria, timestep independent</span>
+
+<span class="sd">        References</span>
+<span class="sd">        -----------</span>
+<span class="sd">        ..  [E6] van Griensven A. and Bauwens W. (2003) Multiobjective</span>
+<span class="sd">            autocalibration for semidistributed water quality models. Water</span>
+<span class="sd">            Resources Research, 39(12), SWC91-SWC99.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MSDE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MSDE">[docs]</a>    <span class="k">def</span> <span class="nf">MSDE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Square Derivative Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean square derivative error is the square of the differences</span>
+<span class="sd">        of predicted and observed variations between two time steps [E5]_.</span>
+<span class="sd">        This criterion penalizes noisy time series and series with</span>
+<span class="sd">        timing error; it thus allows evaluating the peak&#39;s timing.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">dmod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">dobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">((</span><span class="n">dobs</span> <span class="o">-</span> <span class="n">dmod</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RMSE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RMSE">[docs]</a>    <span class="k">def</span> <span class="nf">RMSE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Root Mean Square Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The root mean square error is an absolute criterion that is often</span>
+<span class="sd">        used [4]_. It indicates the overall agreement</span>
+<span class="sd">        between predicted and observed data. The square allows avoiding</span>
+<span class="sd">        error compensation and emphasises larger errors. The root provides</span>
+<span class="sd">        a criterion in actual units. Consequently, this quality criterion</span>
+<span class="sd">        can be compared to the MAE to provide information on the prominence</span>
+<span class="sd">        of outliers in the dataset.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RRMSE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RRMSE">[docs]</a>    <span class="k">def</span> <span class="nf">RRMSE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Relative Root Mean Square Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The relative Root Mean Square Error is the Root Mean Square Error</span>
+<span class="sd">        devided by the mean of the observations.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ---------</span>
+<span class="sd">        RMSE</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RMSE_log"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RMSE_log">[docs]</a>    <span class="k">def</span> <span class="nf">RMSE_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">llambda</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Root Mean Square Error with boxcox trfd values</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The root mean square error is an absolute criterion that is often</span>
+<span class="sd">        used [4]_. It indicates the overall agreement</span>
+<span class="sd">        between predicted and observed data. The square allows avoiding</span>
+<span class="sd">        error compensation and emphasises larger errors. The root provides</span>
+<span class="sd">        a criterion in actual units. Consequently, this quality criterion</span>
+<span class="sd">        can be compared to the MAE to provide information on the prominence</span>
+<span class="sd">        of outliers in the dataset.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RMSE_boxcox"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RMSE_boxcox">[docs]</a>    <span class="k">def</span> <span class="nf">RMSE_boxcox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">llambda</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Root Mean Square Error with boxcox trfd values</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The root mean square error is an absolute criterion that is often</span>
+<span class="sd">        used [4]_. It indicates the overall agreement</span>
+<span class="sd">        between predicted and observed data. The square allows avoiding</span>
+<span class="sd">        error compensation and emphasises larger errors. The root provides</span>
+<span class="sd">        a criterion in actual units. Consequently, this quality criterion</span>
+<span class="sd">        can be compared to the MAE to provide information on the prominence</span>
+<span class="sd">        of outliers in the dataset. Also applied in [E14]_.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">bobs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">**</span><span class="n">llambda</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">llambda</span>
+        <span class="n">bmod</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="o">**</span><span class="n">llambda</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">llambda</span>
+
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">bobs</span><span class="o">-</span><span class="n">bmod</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+
+<div class="viewcode-block" id="Evaluation.R4MS4E"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.R4MS4E">[docs]</a>    <span class="k">def</span> <span class="nf">R4MS4E</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Root 4 Mean Square 4  Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        To put even more emphasis on the larger errors, the fourth root mean</span>
+<span class="sd">        quadruples error is used [E5]_</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ---------</span>
+<span class="sd">        RMSE</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">4.</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+
+<div class="viewcode-block" id="Evaluation.SSE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.SSE">[docs]</a>    <span class="k">def</span> <span class="nf">SSE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sum of Squared Errors (of prediction)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Absolute criteria</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.NSC"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSC">[docs]</a>    <span class="k">def</span> <span class="nf">NSC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Number of Sign Changes of the residuals</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The number of sign changes,[E1]_, counts the number of times the</span>
+<span class="sd">        residual (Oi-Pi) sign change. The minimum value is zero and the</span>
+<span class="sd">        maximum n. A value close to zero indicates a systematic error</span>
+<span class="sd">        (overestimating or under-estimating model) but a more consistent</span>
+<span class="sd">        model. A value close to n indicates a random error.</span>
+
+<span class="sd">        * range: [0, nsize]</span>
+<span class="sd">        * optimum: /</span>
+<span class="sd">        * category: Absolute criteria</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">):</span> <span class="c1">#0 is accounted as positive!!</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">change</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">count</span><span class="o">+</span><span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">v</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">change</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">count</span><span class="o">+</span><span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">change</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">change</span><span class="p">)</span>
+        <span class="n">OF</span><span class="o">=</span><span class="n">count</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 3: Relative error criteria:</span>
+<span class="c1">#    Residuals relative to observed values: At each time step, the error is</span>
+<span class="c1">#    related to the corresponding observed or modelled value. A low value of</span>
+<span class="c1">#    this criterion means a good agreement between observation and</span>
+<span class="c1">#    simulation.</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.MRE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MRE">[docs]</a>    <span class="k">def</span> <span class="nf">MRE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Relative Error</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean relative error [E5]_ provide the average relative model</span>
+<span class="sd">        error. However, negative and positive errors can compensate for</span>
+<span class="sd">        each other.</span>
+
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Relative criteria</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">OF</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MPE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MPE">[docs]</a>    <span class="k">def</span> <span class="nf">MPE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Percent Error</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean percent error [E3]_ provide the average relative model</span>
+<span class="sd">        error. However, negative and positive errors can compensate for</span>
+<span class="sd">        each other.</span>
+
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Relative criteria</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        ---------</span>
+<span class="sd">        MRE</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">100.</span> <span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">OF</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MARE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MARE">[docs]</a>    <span class="k">def</span> <span class="nf">MARE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Absolute Relative Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean absolute relative error is similar to the Mean Relative Error,</span>
+<span class="sd">        but avoids the compensation of errors [E7]_.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Relative criteria</span>
+
+<span class="sd">        References</span>
+<span class="sd">        -----------</span>
+<span class="sd">        ..  [E7] Petersen B., Gernaey K., Henze M. and Vanrolleghem P.A.</span>
+<span class="sd">            (2002) Evaluation of an ASM1 model calibration procedure on a</span>
+<span class="sd">            municipal-industrial wastewater treatment plant. Journal of</span>
+<span class="sd">            Hydroinformatics, 4(1), 15-38.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.SARE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.SARE">[docs]</a>    <span class="k">def</span> <span class="nf">SARE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sum of Absolute Relative Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Relative criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MeAPE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MeAPE">[docs]</a>    <span class="k">def</span> <span class="nf">MeAPE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Median Absolute Percent Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        Median of the absolute relative error expressed in percentage [E5]_.</span>
+<span class="sd">        This criterion is less affected by outliers and the errors</span>
+<span class="sd">        distribution form as the MARE criterion.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Relative criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">*</span><span class="mf">100.</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MSRE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MSRE">[docs]</a>    <span class="k">def</span> <span class="nf">MSRE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Square Relative Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean square relative error avoids compensation of errors and</span>
+<span class="sd">        emphasises larger relative errors [E5]_.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Relative criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.MAPE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.MAPE">[docs]</a>    <span class="k">def</span> <span class="nf">MAPE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean Absolute Percent Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The mean absolute percent error used by [E3]_  is close to MARE.</span>
+<span class="sd">        However, the errors are relative to the predicted values instead</span>
+<span class="sd">        of the observed values. Consequently, the under-predicted values</span>
+<span class="sd">        are penalised (for a similar error). This is an interesting criterion</span>
+<span class="sd">        for situations in which one wants to determine a risk to reach</span>
+<span class="sd">        concentration limits.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Relative criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">100.</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">)))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 4: Total residuals relative to total observed values:</span>
+<span class="c1">#    For the following criteria, the sum of errors is related to the sum of</span>
+<span class="c1">#    observed values, without any correspondence in time step. A low value of</span>
+<span class="c1">#    this criterion means a good agreement between observation and simulation.</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.PBIAS"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.PBIAS">[docs]</a>    <span class="k">def</span> <span class="nf">PBIAS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Percent Bias</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The percent bias [E5]_ and relative volume error are the sum of</span>
+<span class="sd">        errors related to the sum of observed values, expressed as</span>
+<span class="sd">        relative value or in percentage. This criterion measures an overall</span>
+<span class="sd">        adequacy, but the errors can be compensated.</span>
+
+<span class="sd">        (Also known as DEVRV,  the Deviation of runoff volumes, From</span>
+<span class="sd">        Statistical evaluation of WATFLOOD, Angela MacLean, University of</span>
+<span class="sd">        Waterloo)</span>
+
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">100.</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">OF</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.APBIAS"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.APBIAS">[docs]</a>    <span class="k">def</span> <span class="nf">APBIAS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Absolute Percent Bias</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        Useful in combi with PBIAS, eg if PBIAS small and APB very large one</span>
+<span class="sd">        could conclude that volumes are ok, but timing is missing</span>
+<span class="sd">        (continuous gap)</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">100.</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+    <span class="k">def</span> <span class="nf">APB</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#Calculate the Absolute Percent Bias (APB, %); in combi with DEVRV: eg if Dv small and APB very large one could conclude that volumes are ok, but timing is missing (continuous gap)</span>
+        <span class="c1">#From Statistical evaluation of WATFLOOD (Angela MacLean, University of Waterloo)</span>
+        <span class="n">objStat</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Err</span><span class="p">))</span><span class="o">*</span><span class="mi">100</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Meas</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objStat</span>
+
+<div class="viewcode-block" id="Evaluation.BIAS"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.BIAS">[docs]</a>    <span class="k">def</span> <span class="nf">BIAS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Bias E[obs-mod]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">OF</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+
+<div class="viewcode-block" id="Evaluation.RVE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RVE">[docs]</a>    <span class="k">def</span> <span class="nf">RVE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Relative Volume Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The Relative volume error are the sum of errors related to the sum of</span>
+<span class="sd">        observed values, expressed as relative value or in percentage.</span>
+<span class="sd">        This criterion measures an overall adequacy, but the errors can be</span>
+<span class="sd">        compensated</span>
+
+<span class="sd">        * range: [-inf, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RMAE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RMAE">[docs]</a>    <span class="k">def</span> <span class="nf">RMAE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Relative Mean Absolute Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The relative mean absolute error is the sum of absolute errors related</span>
+<span class="sd">        to the sum of observed data [E8]_. The difference with the PBIAS and</span>
+<span class="sd">        RVE is that errors are not compensated.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+
+<span class="sd">        References</span>
+<span class="sd">        -----------</span>
+<span class="sd">        ..  [E8] Elliott J.A., Irish A.E., Reynolds C.S. and Tett P. (2000)</span>
+<span class="sd">            Modelling freshwater phytoplankton communities: an exercise</span>
+<span class="sd">            in validation. Ecological Modelling, 128(1), 19-26.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">))</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.ThInC"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.ThInC">[docs]</a>    <span class="k">def</span> <span class="nf">ThInC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Theils Inequality Coefficient</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        Theil&#39;s inequality coefficient used by [E3]_ and [E8]_ is the mean</span>
+<span class="sd">        square error divided by the sum of observed data. This criterion</span>
+<span class="sd">        avoids error compensation and emphasises larger errors.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 5: Agreement between distributional statistics of observed and modelled data:</span>
+<span class="c1">#    These criteria are not based on error comparison, but on a comparison</span>
+<span class="c1">#    between cumulative modelled and observed data. These criteria originate</span>
+<span class="c1">#    from hydrology and aim at verifying whether the total water volume has</span>
+<span class="c1">#    been reproduced by summing the flows. In the wastewater field these</span>
+<span class="c1">#    criteria can be relevant for influent and effluent pollutant loads by</span>
+<span class="c1">#    summing the fluxes.</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.TMC"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.TMC">[docs]</a>    <span class="k">def</span> <span class="nf">TMC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Totel Mass Controller</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        [E6]_ use the Total Mass Controller criterion as an objective</span>
+<span class="sd">        function. This criterion compares the cumulative predicted and</span>
+<span class="sd">        observed values</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">100.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">))</span><span class="o">-</span><span class="mf">1.</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.CrBal"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.CrBal">[docs]</a>    <span class="k">def</span> <span class="nf">CrBal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Balance Criterion</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm (1- CrBal)</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        [E9]_ use the balance criterion to measure the ability of the model</span>
+<span class="sd">        to reproduce the same cumulative as observed. The difference between</span>
+<span class="sd">        the inversed fractions penalises larger differences between</span>
+<span class="sd">        observed and modelled cumulative values.</span>
+
+<span class="sd">        * range: [-inf, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: Total Relative error criteria</span>
+
+<span class="sd">        Reference</span>
+<span class="sd">        ------------</span>
+<span class="sd">        ..  [E9] Perrin C., Andréassian V. and Michel C. (2006) Simple</span>
+<span class="sd">            benchmark models as a basis for model efficiency criteria. Large</span>
+<span class="sd">            Rivers, 17(Arch. Hydrobiol. Suppl. 161/1-2), 221-244.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">p1</span><span class="o">-</span><span class="n">p2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 6: Comparison of residuals with reference values and with other models:</span>
+<span class="c1">#    These criteria compare the residuals with residuals obtained with a</span>
+<span class="c1">#    reference model, such as a model describing the mean value or the</span>
+<span class="c1">#    previous value</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.NSE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSE">[docs]</a>    <span class="k">def</span> <span class="nf">NSE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Nash-Sutcliffe Efficiency criterion</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+<span class="sd">        Widely used criterion in hydrology, values ranging from -infty -&gt; 1</span>
+<span class="sd">        A zero value means the model is not better than the &#39;no knowledge&#39;</span>
+<span class="sd">        model, which is characterised by the mean of the observations.</span>
+<span class="sd">        Sensitive to extreme values.</span>
+
+<span class="sd">        * range: [-inf, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.NSE_sqrt"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSE_sqrt">[docs]</a>    <span class="k">def</span> <span class="nf">NSE_sqrt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Nash-Sutcliffe Efficiency criterion with root values</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+<span class="sd">        Widely used criterion in hydrology, values ranging from -infty -&gt; 1</span>
+<span class="sd">        A zero value means the model is not better than the &#39;no knowledge&#39;</span>
+<span class="sd">        model, which is characterised by the mean of the observations.</span>
+<span class="sd">        The root values of the observed and measured values are used to</span>
+<span class="sd">        give more emphasis to the lower values</span>
+
+<span class="sd">        * range: [-inf, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.NSE_log"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSE_log">[docs]</a>    <span class="k">def</span> <span class="nf">NSE_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Nash-Sutcliffe Efficiency criterion with logarithmic values</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+<span class="sd">        Widely used criterion in hydrology, values ranging from -infty -&gt; 1</span>
+<span class="sd">        A zero value means the model is not better than the &#39;no knowledge&#39;</span>
+<span class="sd">        model, which is characterised by the mean of the observations.</span>
+<span class="sd">        The log values of the observed and measured values are used to</span>
+<span class="sd">        give more emphasis to the lower values</span>
+
+<span class="sd">        * range: [-inf, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.NSE_boxcox"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSE_boxcox">[docs]</a>    <span class="k">def</span> <span class="nf">NSE_boxcox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">llambda</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Nash-Sutcliffe Efficiency criterion with boxcox transformed values</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+<span class="sd">        Widely used criterion in hydrology, values ranging from -infty -&gt; 1</span>
+<span class="sd">        A zero value means the model is not better than the &#39;no knowledge&#39;</span>
+<span class="sd">        model, which is characterised by the mean of the observations.</span>
+
+<span class="sd">        Model residuals typically increase with higher flowvalues. This</span>
+<span class="sd">        means that themodel residual variance or standard deviation typically</span>
+<span class="sd">        increases with increasing flow. It also means that the higher flow</span>
+<span class="sd">        values receive more weight in the goodness-of-fit statistics, [E10]_.</span>
+
+<span class="sd">        * range: [-inf, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        References</span>
+<span class="sd">        --------------</span>
+<span class="sd">        ..  [E10] Willems, P. A Time Series Tool to Support the</span>
+<span class="sd">            Multi-criteria Performance Evaluation of Rainfall-runoff</span>
+<span class="sd">            Models. Environmental Modelling &amp; Software 24, no. 3 (March 2009):</span>
+<span class="sd">            311–321.</span>
+<span class="sd">            http://linkinghub.elsevier.com/retrieve/pii/S1364815208001606.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">bobs</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">**</span><span class="n">llambda</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">llambda</span>
+        <span class="n">bmod</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="o">**</span><span class="n">llambda</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">llambda</span>
+
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">bobs</span><span class="o">-</span><span class="n">bmod</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">bobs</span> <span class="o">-</span> <span class="n">bobs</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RAE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RAE">[docs]</a>    <span class="k">def</span> <span class="nf">RAE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Relative Absolute Error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        The RAE compares the sum of the absolute residuals to the residuals</span>
+<span class="sd">        of the no knowledge model (mean of observed values, [E11]_. This</span>
+<span class="sd">        criterion does not allow error compensation.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ------------</span>
+<span class="sd">        ..  [E11] Legates D.R. and McCabe G.J. (1999) Evaluating the use of</span>
+<span class="sd">            &#39;goodness-of-fit&#39; measures in hydrologic and hydroclimatic</span>
+<span class="sd">            model validation. Water Resources Research, 35(1), 233-241</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">))</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RSR"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RSR">[docs]</a>    <span class="k">def</span> <span class="nf">RSR</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        RMSE-observation standard deviation ratio</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        The RMSE-observation standard deviation ratio is the RMSE of the</span>
+<span class="sd">        predicted data divided by the RMSE of the no knowledge model</span>
+<span class="sd">        (mean of observed values), [E12]_. It is a scaled criterion that</span>
+<span class="sd">        emphasises larger errors and can be, as for MAE and RMSE, compared</span>
+<span class="sd">        to the RAE to indicate the influence of larger errors.</span>
+
+<span class="sd">        * range: [0, inf]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ------------</span>
+<span class="sd">        ..  [E12] Moriasi D.N., Arnold J.G., Van Liew M.W., Bingner R.L.,</span>
+<span class="sd">            Harmel R.D. and Veith T.L. (2007) Model evaluation guidelines</span>
+<span class="sd">            for systematic quantification of accuracy in watershed</span>
+<span class="sd">            simulations. Transactions of the ASABE, 50(3), 885-900</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.IA"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.IA">[docs]</a>    <span class="k">def</span> <span class="nf">IA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Index of agreement</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Index of agreement is te ratio of the sum of squared errors (SSE)</span>
+<span class="sd">        and the largest potential error with respect to the mean of the</span>
+<span class="sd">        observed values, [E4]_. This is sensitive to the model mean and to</span>
+<span class="sd">        the peak values, and is insensitive to low magnitude values.</span>
+
+<span class="sd">        * range: [0, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.PI"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.PI">[docs]</a>    <span class="k">def</span> <span class="nf">PI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Coefficient of Persistance</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+<span class="sd">        The coefficient of persistence is close tot the NSE criterion, but the</span>
+<span class="sd">        simplistic model used is th elast observed value instead of the</span>
+<span class="sd">        mean of observed values, [E12]_.</span>
+
+<span class="sd">        * range: [0, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">dobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">nom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">dobs</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span>
+
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.RCOEF"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RCOEF">[docs]</a>    <span class="k">def</span> <span class="nf">RCOEF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Correlation coefficient</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        optim : bool</span>
+<span class="sd">            if True, the objective is translated to be used in optimizations</span>
+<span class="sd">            where a minimum value is seeked by the algorithm</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        Used to describe how well a regression line fits a set of data,</span>
+<span class="sd">        compares variability in observed and modelled values. In general not</span>
+<span class="sd">        the best criteria to check model performance,</span>
+<span class="sd">        see more details in [E11]_.</span>
+
+<span class="sd">        * range: [0, 1]</span>
+<span class="sd">        * optimum: 1</span>
+<span class="sd">        * category: comparison with reference model</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">OF</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">OF</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">OF</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">OF</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span></div>
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 7: Others</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.RFLAUT"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.RFLAUT">[docs]</a>    <span class="k">def</span> <span class="nf">RFLAUT</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;biomath&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        First (or higher) lag autocorrelation, higher values of theta gives</span>
+<span class="sd">        the higher value</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        theta : int</span>
+<span class="sd">            lag to calculate</span>
+<span class="sd">        method : biomath|gupta|anders</span>
+<span class="sd">            method to calculate the correlation</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        --------</span>
+<span class="sd">        Calculates the first lag of the autocorrelation of the residuals,</span>
+<span class="sd">        according to the version proposed by [E1]_ when method &#39;gupta1998&#39;</span>
+<span class="sd">        is chosen. Default is the biomath version, as proposed by Gujer, 2008</span>
+<span class="sd">        and more information is given in [E12]_</span>
+
+<span class="sd">        * range: [0, 1]</span>
+<span class="sd">        * optimum: 0</span>
+<span class="sd">        * category: others</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ------------</span>
+<span class="sd">        ..  [E13] Cierkens, Katrijn. Investigating Bioprocess Model Output</span>
+<span class="sd">        Uncertainty as Function of Input Data Quantity and Model Structure.</span>
+<span class="sd">        Ghent University, 2010.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;gupta&#39;</span><span class="p">:</span>
+            <span class="n">nom</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[:</span><span class="o">-</span><span class="n">theta</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">theta</span><span class="p">:])</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">)</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;biomath&#39;</span><span class="p">:</span>
+            <span class="n">r0</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">r0</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[:</span><span class="o">-</span><span class="n">theta</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">theta</span><span class="p">:])</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nom</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[:</span><span class="o">-</span><span class="n">theta</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="n">theta</span><span class="p">:]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">OF</span> <span class="o">=</span> <span class="n">nom</span><span class="o">/</span><span class="n">den</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.SFDCE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.SFDCE">[docs]</a>    <span class="k">def</span> <span class="nf">SFDCE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Slope of the flow duration curve error</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        Based on the FDC, measures how well the model captures the</span>
+<span class="sd">        distribution of mid-level flow. The slope of a watershed&#39;s flow</span>
+<span class="sd">        duration curve indicates the variability, or flashiness, of its</span>
+<span class="sd">        flow magnitudes. The SFDCE metric is thus simply the absolute</span>
+<span class="sd">        error in the slope of the flow duration curve between the 30</span>
+<span class="sd">        and 70 percentile flows.</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ------------</span>
+<span class="sd">        ..  [E14] van Werkhoven, Kathryn, Thorsten Wagener, Patrick Reed,</span>
+<span class="sd">            and Yong Tang. Sensitivity-guided Reduction of Parametric</span>
+<span class="sd">            Dimensionality for Multi-objective Calibration of Watershed</span>
+<span class="sd">            Models. Advances in Water Resources 32, no. 8 (2009): 1154–1169.</span>
+<span class="sd">            http://dx.doi.org/10.1016/j.advwatres.2009.03.002.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">QMeas30</span><span class="o">=</span><span class="n">stats</span><span class="o">.</span><span class="n">scoreatpercentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">,</span> <span class="mf">30.</span><span class="p">)</span>
+        <span class="n">QMeas70</span><span class="o">=</span><span class="n">stats</span><span class="o">.</span><span class="n">scoreatpercentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">,</span> <span class="mf">70.</span><span class="p">)</span>
+
+        <span class="n">QMod30</span><span class="o">=</span><span class="n">stats</span><span class="o">.</span><span class="n">scoreatpercentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">,</span> <span class="mf">30.</span><span class="p">)</span>
+        <span class="n">QMod70</span><span class="o">=</span><span class="n">stats</span><span class="o">.</span><span class="n">scoreatpercentile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">,</span> <span class="mf">70.</span><span class="p">)</span>
+
+        <span class="n">objStat</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">((</span><span class="n">QMod70</span><span class="o">-</span><span class="n">QMod30</span><span class="p">)</span><span class="o">/</span><span class="mi">40</span><span class="o">-</span><span class="p">(</span><span class="n">QMeas70</span><span class="o">-</span><span class="n">QMeas30</span><span class="p">)</span><span class="o">/</span><span class="mi">40</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objStat</span></div>
+
+<div class="viewcode-block" id="Evaluation.LowFDCE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.LowFDCE">[docs]</a>    <span class="k">def</span> <span class="nf">LowFDCE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Flow Duration Curve based low flow criterion</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        Uses the lower part (highest percentiles) of the Flow Duration Curve</span>
+<span class="sd">        to focus on low flow regimes. Always use in combination with a</span>
+<span class="sd">        second criterion to make sure the timing of the model is also</span>
+<span class="sd">        satifying. Used in [E15]_.</span>
+
+<span class="sd">        Reference</span>
+<span class="sd">        ------------</span>
+<span class="sd">        Van Hoey S., van der Kwast J., Seuntjens P., Pereira F., Nopens I.</span>
+<span class="sd">        (2012). Model structure identification based on ensemble model</span>
+<span class="sd">        evaluation for the prediction of low and high flows in rivers,</span>
+<span class="sd">        Water Resources Research, in review</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">EP</span><span class="p">,</span><span class="n">EPMeas</span><span class="p">,</span><span class="n">EPModel</span> <span class="o">=</span> <span class="n">FindEPs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">,</span> <span class="n">valnum</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+                                    <span class="n">qvalmin</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">qvalmax</span><span class="o">=</span><span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">EPMeas</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">EPModel</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.HighFDCE"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.HighFDCE">[docs]</a>    <span class="k">def</span> <span class="nf">HighFDCE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Flow Duration Curve based high flow criterion</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        Uses the upper part (lowest percentiles) of the Flow Duration Curve</span>
+<span class="sd">        to focus on high flow regimes. Always use in combination with a</span>
+<span class="sd">        second criterion to make sure the timing of the model is also</span>
+<span class="sd">        satifying. Used in [E15]_.</span>
+
+<span class="sd">        Reference</span>
+<span class="sd">        ------------</span>
+<span class="sd">        ..  [E15] Van Hoey S., van der Kwast J., Seuntjens P., Pereira F.,</span>
+<span class="sd">            Nopens I. (2012). Model structure identification based on ensemble</span>
+<span class="sd">            model evaluation for the prediction of low and high flows in</span>
+<span class="sd">            rivers, Water Resources Research, in review</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">EP</span><span class="p">,</span><span class="n">EPMeas</span><span class="p">,</span><span class="n">EPModel</span> <span class="o">=</span> <span class="n">FindEPs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">,</span>
+                                    <span class="n">valnum</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">qvalmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">qvalmax</span><span class="o">=</span><span class="mf">70.0</span><span class="p">)</span>
+        <span class="n">objStat</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">EPMeas</span><span class="o">-</span><span class="n">EPModel</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objStat</span></div>
+
+
+
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#CAT 8: Combined criteria</span>
+<span class="c1">#   combination can be made from the different values, but those listed here</span>
+<span class="c1">#   do have specific relevance in model evaluation</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.NSE_BIAS"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSE_BIAS">[docs]</a>    <span class="k">def</span> <span class="nf">NSE_BIAS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>     <span class="c1">#Popular on the MODSIM2011 conference NSE-5(ln(1+Bias)^2.5)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Combination of Nash Sutcliff and BIAS</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        The criterium is gaining importance by the combined effect and is</span>
+<span class="sd">        proposed in [E16]_. Here an adaptation is implemented by taking the</span>
+<span class="sd">        absolute value of the bias, to make the function symmetrical around</span>
+<span class="sd">        the optimal value.</span>
+
+
+<span class="sd">        References</span>
+<span class="sd">        ------------</span>
+<span class="sd">        ..  [E16] Viney, N.R., J. Perraud, J. Vaze F.H.S. Chiew, D.A. Post</span>
+<span class="sd">            and A. Yang (2009b).  The usefulness of bias constraints in model</span>
+<span class="sd">            calibration for regionalisation to ungauged catchments.</span>
+<span class="sd">            Proceedings, MODSIM 200</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">OF</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NSE</span><span class="p">()</span><span class="o">-</span> <span class="mi">5</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">BIAS</span><span class="p">()))))</span><span class="o">**</span><span class="mf">2.5</span>
+        <span class="k">return</span> <span class="n">OF</span></div>
+
+<div class="viewcode-block" id="Evaluation.NSE_FDClow"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSE_FDClow">[docs]</a>    <span class="k">def</span> <span class="nf">NSE_FDClow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">w1</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span><span class="n">w2</span><span class="o">=</span><span class="mf">1.</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Nash Sutcliffe (mod) + low Flow; zelfde gewichtsfactor,</span>
+<span class="sd">        als fout groter, ook beide groter!</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        w1 : float (0-1)</span>
+<span class="sd">            weighting factor 1, NSE</span>
+<span class="sd">        w2 : float (0-1)</span>
+<span class="sd">            weighting factor 2, FDC</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">DMS</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">MMS</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">objStat1</span><span class="o">=</span><span class="p">(</span><span class="n">DMS</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS</span><span class="p">)</span>
+
+        <span class="n">EP</span><span class="p">,</span><span class="n">EPMeas</span><span class="p">,</span><span class="n">EPModel</span> <span class="o">=</span> <span class="n">FindEPs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">,</span> <span class="n">valnum</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                                    <span class="n">qvalmin</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">qvalmax</span><span class="o">=</span><span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">DMS2</span> <span class="o">=</span> <span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">EPMeas</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">EPModel</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">EPMeas</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">MMS2</span> <span class="o">=</span> <span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">EPMeas</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">EPMeas</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">EPMeas</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">objStat2</span> <span class="o">=</span> <span class="p">(</span><span class="n">DMS2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS2</span><span class="p">)</span>
+
+        <span class="n">objStat</span> <span class="o">=</span> <span class="n">w1</span><span class="o">*</span><span class="n">objStat1</span> <span class="o">+</span> <span class="n">w2</span><span class="o">*</span><span class="n">objStat2</span>
+        <span class="k">return</span> <span class="n">objStat</span></div>
+
+<div class="viewcode-block" id="Evaluation.NSE_FDChigh"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.NSE_FDChigh">[docs]</a>    <span class="k">def</span> <span class="nf">NSE_FDChigh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">w1</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span><span class="n">w2</span><span class="o">=</span><span class="mf">1.</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Nash Sutcliff (mod) + high Flow; zelfde gewichtsfactor: als fout groter, ook beide groter!</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        w1 : float (0-1)</span>
+<span class="sd">            weighting factor 1, NSE</span>
+<span class="sd">        w2 : float (0-1)</span>
+<span class="sd">            weighting factor 2, FDC</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">DMS</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">MMS</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">objStat1</span><span class="o">=</span><span class="p">(</span><span class="n">DMS</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS</span><span class="p">)</span>
+
+        <span class="n">EP</span><span class="p">,</span><span class="n">EPMeas</span><span class="p">,</span><span class="n">EPModel</span> <span class="o">=</span> <span class="n">FindEPs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">,</span><span class="n">valnum</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span><span class="n">qvalmin</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span><span class="n">qvalmax</span><span class="o">=</span><span class="mf">70.0</span><span class="p">)</span>
+        <span class="n">DMS2</span> <span class="o">=</span> <span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">EPMeas</span><span class="o">-</span><span class="n">EPModel</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">EPMeas</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">MMS2</span> <span class="o">=</span> <span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">EPMeas</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">EPMeas</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">EPMeas</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">objStat2</span> <span class="o">=</span> <span class="p">(</span><span class="n">DMS2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS2</span><span class="p">)</span>
+
+        <span class="n">objStat</span> <span class="o">=</span> <span class="n">w1</span><span class="o">*</span><span class="n">objStat1</span> <span class="o">+</span> <span class="n">w2</span><span class="o">*</span><span class="n">objStat2</span>
+        <span class="k">return</span> <span class="n">objStat</span></div>
+
+
+<span class="c1">###########################################################################</span>
+<span class="c1">#FIGURES</span>
+<span class="c1">###########################################################################</span>
+
+<div class="viewcode-block" id="Evaluation.check_boxcox"><a class="viewcode-back" href="../../evaluation.html#pystran.Evaluation.check_boxcox">[docs]</a>    <span class="k">def</span> <span class="nf">check_boxcox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">llambda</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Function to evaluate the effect of the box cox transformation</span>
+<span class="sd">        applied on the data, cfr. WETSPRO tool, hydromad application</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">pass</span></div></div>
+
+<span class="c1">###observed data</span>
+<span class="c1">#obsreal = np.loadtxt(os.path.join(&#39;D:\Projecten\WL\VHM\Data&#39;,&#39;Flow_Cal_Meas_13aug02_31dec05&#39;))[:10000]</span>
+<span class="c1">##Modres Thomas</span>
+<span class="c1">#modreal = np.loadtxt(os.path.join(&#39;D:\Projecten\WL\VHM\Data&#39;,&#39;Modres_thomas_NAM_Cal_13aug_31dec05&#39;))[:10000]</span>
+<span class="c1">#of = Evaluation(obsreal,modreal)</span>
+
+
+<span class="c1">#depreciated function: use stats.scoreatpercentile</span>
+<span class="k">def</span> <span class="nf">FDC_quantile</span><span class="p">(</span><span class="n">FlowSerie</span><span class="p">,</span><span class="n">qval</span><span class="o">=</span><span class="mf">30.0</span><span class="p">):</span>
+    <span class="c1">#Give the y-value (Flow) for a certain percentile value</span>
+    <span class="n">y2</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">FlowSerie</span><span class="p">)</span>
+    <span class="n">y</span><span class="o">=</span><span class="n">y2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="n">y</span><span class="o">.</span><span class="n">size</span><span class="p">,</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">=</span><span class="n">z</span><span class="o">*</span><span class="mi">100</span><span class="o">/</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">size</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ival</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">p</span><span class="o">&gt;</span><span class="n">qval</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">Qival</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">take</span><span class="p">([</span><span class="n">ival</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">Qival</span>
+
+<span class="k">class</span> <span class="nc">Likelihood</span><span class="p">(</span><span class="n">FlowAnalysis</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Class for deriving different Likelihoods,</span>
+<span class="sd">    Informal Likelihoods -&gt; useful for GLUE and Bayesian based approaches</span>
+<span class="sd">    all between 0.0 and 1.0</span>
+
+<span class="sd">    Todo: log-likelihood translation towards: </span>
+<span class="sd">	transformation by: nll = lambda *args: -lnlike(*args)</span>
+
+<span class="sd">    References</span>
+<span class="sd">    --------------</span>
+<span class="sd">    ..  [E17] Smith, P, K Beven, and J Tawn. Informal likelihood measures in</span>
+<span class="sd">        model assessment: Theoretic development and investigation. Advances</span>
+<span class="sd">        in Water Resources 31, no. 8 (August 2008): 1087-1100</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">modelled</span><span class="p">):</span>
+         <span class="n">FlowAnalysis</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+
+         <span class="k">if</span> <span class="n">modelled</span><span class="o">.</span><span class="n">shape</span> <span class="o">&lt;&gt;</span> <span class="n">observed</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Modelled and observed timeseries need </span><span class="se">\</span>
+<span class="s1">                                 to be of the same size&#39;</span><span class="p">)</span>
+
+         <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span> <span class="o">=</span> <span class="n">modelled</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">infodict</span><span class="p">()</span>
+
+         <span class="k">print</span> <span class="s1">&#39;Criteria suited for Likihood maximization, use optim=True</span><span class="se">\</span>
+<span class="s1">         to use in minimzation exercise; Not adviced to use in automated</span><span class="se">\</span>
+<span class="s1">         minimalization algorithms, because of jumps between 0 and none</span><span class="se">\</span>
+<span class="s1">         zero values, use the evaluation class instead; use log version instead&#39;</span>
+
+    <span class="k">def</span> <span class="nf">infodict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Prepares information dictionary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="o">=</span><span class="p">{}</span>
+        <span class="c1">#CAT 1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;Inf_NSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Nash Sutcliff Likelihood&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;Inf_CM&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Chiew &amp; McMahon&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;Inf_NSSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Normalised Sum of Squared Errors&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;IOA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Index of agreement Likelihood&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;MCE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mean cumulative error Likelihood&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;NAE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Normalised absolute error Likelihood&#39;</span>
+
+
+    <span class="k">def</span> <span class="nf">INF_NSE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Informal Nash-Sutcliff Measure</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">DMS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">MMS</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">Like</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="p">(</span><span class="n">DMS</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS</span><span class="p">),</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">Like</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">Like</span>
+
+        <span class="k">return</span> <span class="n">Like</span>
+
+    <span class="k">def</span> <span class="nf">INF_CM</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Chiew &amp; McmMahon Likelihood</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">DMS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">**</span><span class="mf">0.5</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span><span class="o">**</span><span class="mf">2.0</span><span class="p">)</span>
+        <span class="n">MMS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">**</span><span class="mf">0.5</span><span class="o">-</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">Like</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="p">(</span><span class="n">DMS</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS</span><span class="p">),</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">Like</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">Like</span>
+
+        <span class="k">return</span> <span class="n">Like</span>
+
+    <span class="k">def</span> <span class="nf">INF_NSSE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Normalised SSE</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">TT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">Like</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="n">TT</span><span class="p">,</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">Like</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">Like</span>
+
+        <span class="k">return</span> <span class="n">Like</span>
+
+    <span class="k">def</span> <span class="nf">INF_IOA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Index of agreement Likelihood</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">DMS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">MMS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span> <span class="o">+</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">Like</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">-</span><span class="p">(</span><span class="n">DMS</span><span class="o">/</span><span class="n">MMS</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">Like</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">Like</span>
+
+        <span class="k">return</span> <span class="n">Like</span>
+
+    <span class="k">def</span> <span class="nf">INF_MCE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Mean cumulative error Likelihood</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">DMS</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelled</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span>
+        <span class="n">MMS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">))</span>
+        <span class="n">Like</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="p">(</span><span class="n">DMS</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS</span><span class="p">),</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">Like</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">Like</span>
+
+        <span class="k">return</span> <span class="n">Like</span>
+
+    <span class="k">def</span> <span class="nf">INF_NAE</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Normalised absolute error Likelihood</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">DMS</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="p">))</span>
+        <span class="n">MMS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed</span><span class="p">)))</span>
+        <span class="n">Like</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mf">1.0</span><span class="o">-</span><span class="p">(</span><span class="n">DMS</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">MMS</span><span class="p">),</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optim</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">Like</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">-</span> <span class="n">Like</span>
+
+        <span class="k">return</span> <span class="n">Like</span>
+
+<span class="k">class</span> <span class="nc">evalmodselection</span><span class="p">(</span><span class="n">FlowAnalysis</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Model Selection Criteria; Punishing the performance with the complexity</span>
+<span class="sd">    of the model; complexity is here only measured by the number of parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    --------</span>
+<span class="sd">    These criteria are actually developed for statistical model development,</span>
+<span class="sd">    typical regression models and distribution fitting models. The applicability</span>
+<span class="sd">    on dynamic mathematical models is not always so valid, seen the other</span>
+<span class="sd">    factors that need to be taken into account for model evaluation. Please use</span>
+<span class="sd">    the results with care.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ------------</span>
+<span class="sd">    ..  [E18] Nopens, Ingmar. Modelleren En Simuleren Van Biosystemen, 2010.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">,</span> <span class="n">modelled</span><span class="p">,</span> <span class="n">npar</span><span class="p">):</span>
+         <span class="n">FlowAnalysis</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+
+         <span class="k">if</span> <span class="n">modelled</span><span class="o">.</span><span class="n">shape</span> <span class="o">&lt;&gt;</span> <span class="n">observed</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Modelled and observed timeseries need </span><span class="se">\</span>
+<span class="s1">                                 to be of the same size&#39;</span><span class="p">)</span>
+
+         <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span> <span class="o">=</span> <span class="n">modelled</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">modelled</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">infodict</span><span class="p">()</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">npar</span> <span class="o">=</span> <span class="n">npar</span>
+
+         <span class="k">print</span> <span class="s1">&#39;Criteria suited for statistical model structure selection&#39;</span>
+
+    <span class="k">def</span> <span class="nf">SSE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">infodict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Prepares information dictionary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="o">=</span><span class="p">{}</span>
+        <span class="c1">#CAT 1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;AIC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Akaike information criterion&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;BIC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Bayesian information criterion&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;LILC&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Law of Iterated Logarithm Criterion&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">explainname</span><span class="p">[</span><span class="s1">&#39;FPE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Final Prediction Error&#39;</span>
+
+    <span class="k">def</span> <span class="nf">AIC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate the AIC-criterium,</span>
+<span class="sd">        based on the SSE-algorithm (Phd Brecht Donckels)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">AIC</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SSE</span><span class="p">()</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span>
+        <span class="c1">#AIC =self.Err.data.size*log(self.SSE/size(self.Err.data))+2*npar</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span> <span class="o">&gt;</span> <span class="mi">40</span><span class="p">:</span>
+            <span class="n">objStat</span> <span class="o">=</span> <span class="n">AIC</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">objStat</span> <span class="o">=</span> <span class="n">AIC</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span><span class="o">-</span><span class="mf">1.</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objStat</span>
+
+    <span class="k">def</span> <span class="nf">BIC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate the BIC-criterium, based on the SSE-algorithm</span>
+<span class="sd">        (Phd Bracht Verbeke), wel consistent (naar 0 als datptn nr oneindig)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">objStat</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SSE</span><span class="p">()</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objStat</span>
+
+    <span class="k">def</span> <span class="nf">LILC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Khinchin&#39;s law of Iterated Logarithm Criterion (Modsim_cursus)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">objStat</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SSE</span><span class="p">()</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">objStat</span>
+
+    <span class="k">def</span> <span class="nf">FPE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate Final Prediction Error (FPE)  (Modsim_cursus)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">objStat</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SSE</span><span class="p">()</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">size</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">npar</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">objStat</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, S. Van Hoey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

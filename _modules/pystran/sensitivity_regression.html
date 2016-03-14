@@ -1,0 +1,681 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pystran.sensitivity_regression &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pystran.sensitivity_regression</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Mar 18 14:25:58 2013</span>
+
+<span class="sd">@author: VHOEYS</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">sensitivity_base</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">sobol_lib</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">extrafunctions</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">latextablegenerator</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">plot_functions_rev</span> <span class="kn">import</span> <span class="n">TornadoSensPlot</span><span class="p">,</span> <span class="n">plotbar</span>
+
+
+<div class="viewcode-block" id="SRCSensitivity"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity">[docs]</a><span class="k">class</span> <span class="nc">SRCSensitivity</span><span class="p">(</span><span class="n">SensitivityAnalysis</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    The regression sensitivity analysis:</span>
+<span class="sd">    MC based sampling in combination with a SRC calculation; the rank based</span>
+<span class="sd">    approach (less dependent on linearity) is also included in the SRC </span>
+<span class="sd">    calculation and is called SRRC</span>
+<span class="sd">    </span>
+<span class="sd">    The model is proximated by a linear model of the same parameterspace and the</span>
+<span class="sd">    influences of the parameters on the model output is evaluated.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">    parsin : list</span>
+<span class="sd">        Either a list of (min,max,&#39;name&#39;) values, </span>
+<span class="sd">        [(min,max,&#39;name&#39;),(min,max,&#39;name&#39;),...(min,max,&#39;name&#39;)]</span>
+<span class="sd">        or a list of ModPar instances</span>
+
+<span class="sd">    Attributes            </span>
+<span class="sd">    ------------</span>
+<span class="sd">    _ndim :  intx</span>
+<span class="sd">        number of factors examined. In case the groups are chosen the number </span>
+<span class="sd">        of factors is stores in NumFact and sizea becomes the number of created groups, (k)</span>
+<span class="sd">        </span>
+<span class="sd">    Notes</span>
+<span class="sd">    ---------</span>
+<span class="sd">    Rank transformation: </span>
+<span class="sd">        Rank transformation of the data can be used to transform a nonlinear </span>
+<span class="sd">        but monotonic relationship to a linear relationship. When using rank </span>
+<span class="sd">        transformation the data is replaced with their corresponding ranks.</span>
+<span class="sd">        Ranks are defined by assigning 1 to the smallest value,</span>
+<span class="sd">        2 to the second smallest and so-on, until the largest</span>
+<span class="sd">        value has been assigned the rank N.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    ------------</span>
+<span class="sd">    &gt;&gt;&gt; ai=np.array([10,20,15,1,2,7])</span>
+<span class="sd">    &gt;&gt;&gt; Xi = [(8.0,9.0,r&#39;$X_1$&#39;),(7.0,10.0,r&#39;$X_2$&#39;),(6.0,11.0,r&#39;$X_3$&#39;),</span>
+<span class="sd">    &gt;&gt;&gt;       (5.0,12.0,r&#39;$X_4$&#39;), (4.0,13.0,r&#39;$X_5$&#39;),(3.0,4.,r&#39;$X_6$&#39;)]      </span>
+<span class="sd">    &gt;&gt;&gt; #prepare method</span>
+<span class="sd">    &gt;&gt;&gt; reg=SRCSensitivity(Xi)</span>
+<span class="sd">    &gt;&gt;&gt; #prepare parameter samples</span>
+<span class="sd">    &gt;&gt;&gt; reg.PrepareSample(1000)  </span>
+<span class="sd">    &gt;&gt;&gt; #run model and get outputs for all MC samples</span>
+<span class="sd">    &gt;&gt;&gt; output = np.zeros((reg.parset2run.shape[0],1))</span>
+<span class="sd">    &gt;&gt;&gt; for i in range(reg.parset2run.shape[0]):</span>
+<span class="sd">    &gt;&gt;&gt;     output[i,:] = simplelinear(ai,reg.parset2run[i,:])</span>
+<span class="sd">    &gt;&gt;&gt; #Calc SRC without using rank-based approach</span>
+<span class="sd">    &gt;&gt;&gt; reg.Calc_SRC(output, rankbased=False)</span>
+<span class="sd">    &gt;&gt;&gt; #check if the sum of the squared values approaches 1</span>
+<span class="sd">    &gt;&gt;&gt; print reg.sumcheck</span>
+<span class="sd">    &gt;&gt;&gt; [ 1.00555193]</span>
+<span class="sd">    &gt;&gt;&gt; reg.plot_tornado(outputid = 0, ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="sd"> </span>
+<span class="sd">    References</span>
+<span class="sd">    ------------</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">,</span> <span class="n">ModelType</span> <span class="o">=</span> <span class="s1">&#39;external&#39;</span><span class="p">):</span>
+        <span class="n">SensitivityAnalysis</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_methodname</span> <span class="o">=</span> <span class="s1">&#39;Regression_merged&#39;</span>
+        
+        <span class="k">if</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;pyFUSE&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is built up by the pyFUSE environment&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;external&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>           
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is externally run&#39;</span>            
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;PCRaster&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;PCRasterPython&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a PCRasterPython Framework instance&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;testmodel&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;testmodel&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a testmodel&#39;</span>            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Not supported model type&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">LB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">el</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">UB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span><span class="p">])</span>
+
+<div class="viewcode-block" id="SRCSensitivity.PrepareSample"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity.PrepareSample">[docs]</a>    <span class="k">def</span> <span class="nf">PrepareSample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="p">,</span> <span class="n">samplemethod</span><span class="o">=</span><span class="s1">&#39;Sobol&#39;</span><span class="p">,</span> <span class="n">seedin</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sampling of the parameter space. No specific sampling preprocessing</span>
+<span class="sd">        procedure is needed, only a general Monte Carlo sampling of the </span>
+<span class="sd">        parameter space is expected. To improve the sampling procedure, </span>
+<span class="sd">        Latin Hypercube or Sobol pseudo-random sampling can be preferred. The </span>
+<span class="sd">        latter is used in the pySTAN framework, but using the ModPar class</span>
+<span class="sd">        individually enables Latin Hypercube and random sampling.</span>
+<span class="sd">        </span>
+<span class="sd">        Currently only uniform distributions are supported by the framework,</span>
+<span class="sd">        but the Modpar class enables other dsitributions to sample the </span>
+<span class="sd">        parameter space and bypassing the sampling here.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        nbaseruns : int</span>
+<span class="sd">            number of samples to take for the analysis; highly dependent from</span>
+<span class="sd">            the total number of input factors. range of 10000s is minimum.</span>
+<span class="sd">        samplemethod : &#39;sobol&#39; or &#39;lh&#39;</span>
+<span class="sd">            sampling method to use for the sampling</span>
+<span class="sd">        seedin : int</span>
+<span class="sd">            seed to start the Sobol sampling from. This enables to increase</span>
+<span class="sd">            the sampling later on, by starting from the previous seedout.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        seed_out : int</span>
+<span class="sd">            the last seed, useful for later use</span>
+<span class="sd">        parset2run : ndarray</span>
+<span class="sd">            parameters to run the model (nbaseruns x ndim)</span>
+<span class="sd">            </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        - Do the Sobol sampling always for the entire parameter space at the </span>
+<span class="sd">        same time, for LH this doesn&#39;t matter!</span>
+<span class="sd">        - Never extend the sampling size with using the same seed, since this</span>
+<span class="sd">        generates duplicates of the samples!</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#Prepare the baseruns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nbaseruns</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">samplemethod</span><span class="o">==</span><span class="s1">&#39;Sobol&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="o">=</span> <span class="n">nbaseruns</span>
+            <span class="c1"># generate a (N,2k) matrix with </span>
+            <span class="n">FacIn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span>           
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>   
+                <span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">seed_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">i4_sobol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span> <span class="n">seedin</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">r</span>        
+                <span class="n">seedin</span> <span class="o">=</span> <span class="n">seed_out</span>
+    
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rescale</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">FacIn</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> 
+                                            <span class="n">FacIn</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">seed_out</span> <span class="o">=</span> <span class="n">seed_out</span>
+            <span class="k">print</span> <span class="s1">&#39;Last seed pointer is &#39;</span><span class="p">,</span><span class="n">seed_out</span>
+
+        <span class="k">elif</span> <span class="n">samplemethod</span><span class="o">==</span><span class="s1">&#39;lh&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="o">=</span> <span class="n">nbaseruns</span>
+            <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+            <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">latinhypercube</span><span class="p">(</span><span class="n">nbaseruns</span><span class="p">)</span>
+                <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Only Sobol and Latin HYpercube sampling is provided to ensure optimal coverage of the parameter space&#39;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">totalnumberruns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="SRCSensitivity.quickscatter"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity.quickscatter">[docs]</a>    <span class="k">def</span> <span class="nf">quickscatter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">output</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Quick link to the general scatter function, by passing to the general</span>
+<span class="sd">        scattercheck plot of the sensitivity base-class</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        output: ndimx1 array</span>
+<span class="sd">            array with the output for one output of the model;</span>
+<span class="sd">            this can be an Objective function or an other model statistic</span>
+<span class="sd">            </span>
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        Used to check linearity of the input/output relation in order to evaluate</span>
+<span class="sd">        the usefulness of the SRC-regression based technique</span>
+<span class="sd">        </span>
+<span class="sd">        Examples</span>
+<span class="sd">        ----------</span>
+<span class="sd">        &gt;&gt;&gt; reg.quickscatter(output)</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scattercheck</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> 
+                          <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span></div>
+    
+
+    <span class="k">def</span> <span class="nf">_standardize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">output</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        To get the Standardized Regression Coefficients (SRC), we need to </span>
+<span class="sd">        standardize the variables (outputs and parameters)        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">print</span> <span class="s1">&#39;calculating standardized values...&#39;</span>
+        <span class="n">parmean</span><span class="p">,</span> <span class="n">parstd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">outmean</span><span class="p">,</span> <span class="n">outstd</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">output</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">parscaled</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span> <span class="o">-</span> <span class="n">parmean</span><span class="p">)</span><span class="o">/</span><span class="n">parstd</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputscaled</span> <span class="o">=</span> <span class="p">(</span><span class="n">output</span> <span class="o">-</span> <span class="n">outmean</span><span class="p">)</span><span class="o">/</span><span class="n">outstd</span>        
+        <span class="k">print</span> <span class="s1">&#39;...done&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_transform2rank</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pars</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        hidden definition for rank transformation</span>
+<span class="sd">        &#39;&#39;&#39;</span>        
+        <span class="k">print</span> <span class="s1">&#39;calclulating standardized values...&#39;</span>
+        
+        <span class="n">parranked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">pars</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pars</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">parranked</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">rankdata</span><span class="p">(</span><span class="n">pars</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+        
+        <span class="n">outputranked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>            
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">outputranked</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">rankdata</span><span class="p">(</span><span class="n">output</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+        
+        <span class="k">return</span> <span class="n">parranked</span><span class="p">,</span> <span class="n">outputranked</span>
+
+<div class="viewcode-block" id="SRCSensitivity.Calc_SRC"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity.Calc_SRC">[docs]</a>    <span class="k">def</span> <span class="nf">Calc_SRC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">output</span><span class="p">,</span> <span class="n">rankbased</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        SRC sensitivity calculation for multiple outputs</span>
+<span class="sd">        </span>
+<span class="sd">        Check is done on the Rsq value (higher than 0.7?) and the sum of SRC&#39;s</span>
+<span class="sd">        for the usefulness of the method.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        output : Nxm ndarray</span>
+<span class="sd">            array with the model outputs (N MC simulations and m different </span>
+<span class="sd">            outputs)</span>
+<span class="sd">        </span>
+<span class="sd">        rankbased : boolean</span>
+<span class="sd">            if True, SRC values are transformed into SRRC values; using ranks </span>
+<span class="sd">            instead of values itself</span>
+<span class="sd">        </span>
+<span class="sd">        Attributes</span>
+<span class="sd">        ------------</span>
+<span class="sd">        SRC : ndimxnoutputs narray</span>
+<span class="sd">            Standardized Regression Coefficients</span>
+<span class="sd">        cova : </span>
+<span class="sd">            variance-Covariance matrix</span>
+<span class="sd">        core : </span>
+<span class="sd">            correlation matrix</span>
+<span class="sd">        sumcheck : noutput narray</span>
+<span class="sd">            chek for linearity by summing the SRC values</span>
+<span class="sd">                        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        Least squares Estimation theory, </span>
+<span class="sd">        eg. http://www.stat.math.ethz.ch/~geer/bsa199_o.pdf</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#prepare SRC matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SRRC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cova</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">corre</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sumcheck</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+     
+        <span class="c1">#standardize variables/parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_standardize</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">rankbased</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parrankscaled</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputrankscaled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform2rank</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parscaled</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputscaled</span><span class="p">)</span>
+            
+        
+        <span class="c1">#calcluate SRC values for each output</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">print</span> <span class="s1">&#39;--------------------------&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;Working on column &#39;</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="s1">&#39;...&#39;</span>
+            <span class="c1">#the res is the sum(res**2) value; functional for covariance calculation</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">res</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parscaled</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">outputscaled</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">rankbased</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">SRRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">res</span><span class="p">,</span> <span class="n">rank</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parrankscaled</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">outputrankscaled</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+            
+            <span class="c1">#correlation coefficient to check linear assumption</span>
+            <span class="n">Yi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parscaled</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span> <span class="c1">#matrix multiplication</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputscaled</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span><span class="n">Yi</span><span class="p">)</span>
+            <span class="n">Rsq</span> <span class="o">=</span> <span class="n">R</span><span class="o">**</span><span class="mi">2</span>
+            <span class="k">print</span> <span class="s1">&#39;Rsq (for SRC calculation) = &#39;</span><span class="p">,</span> <span class="n">Rsq</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+                                           
+            <span class="c1">#another possibility to get Rsq based on residuals (OLS theory)</span>
+            <span class="c1">#Rsq_2 = 1. - res / sum((self.outputscaled - self.outputscaled.mean())**2)            </span>
+    
+            <span class="c1">#The 0.7 threshold is a rule of thumb used in literature</span>
+            <span class="k">if</span> <span class="n">Rsq</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.7</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s1">&#39;&#39;&#39;ATTENTION: the coefficient of determination, Rsq, i.e. the fraction of the output variance that is explained by the regression model, is lower than 0.7. for SRC calcluation. Consider using a method which is less dependent on the assumption of linearity and evaluate SRRC result.&#39;&#39;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s1">&#39;&#39;&#39;Assumption of linearity is assumed valid with the Rsq value higer than 0.7&#39;&#39;&#39;</span>
+            
+            <span class="k">if</span> <span class="n">rankbased</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="n">Yi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parrankscaled</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">SRRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span> <span class="c1">#matrix multiplication</span>
+                <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputrankscaled</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span><span class="n">Yi</span><span class="p">)</span>
+                <span class="n">Rsq</span> <span class="o">=</span> <span class="n">R</span><span class="o">**</span><span class="mi">2</span>
+                <span class="k">print</span> <span class="s1">&#39;Rsq (for SRRC calculation) = &#39;</span><span class="p">,</span><span class="n">Rsq</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> 
+
+            <span class="c1">#another check: sum of the SRC^2 should be 1!! </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sumcheck</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">print</span> <span class="s1">&#39;Sum of squared sensitivities should approach 1, for SRC: &#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">sumcheck</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">rankbased</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="n">sumcheck</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SRRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span><span class="bp">self</span><span class="o">.</span><span class="n">SRRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">print</span> <span class="s1">&#39;Sum of squared sensitivities should approach 1, for SRRC: &#39;</span><span class="p">,</span><span class="n">sumcheck</span>
+            
+            <span class="c1">#Calculates the Parameter variance-covariance  matrix</span>
+			<span class="c1">#variances on the diagonal, covariances of factors on the non-diagonal </span>
+            <span class="c1">#residuals = sum((self.outputscaled[:,i] - Yi)**2) #same as res from lstsq function</span>
+            <span class="n">n</span><span class="p">,</span><span class="n">p</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parscaled</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="n">res</span><span class="o">/</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="n">p</span><span class="p">)</span>   <span class="c1">#estimator for variance; better to do n-p-1?</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cova</span><span class="p">[:,:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">s2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parscaled</span><span class="o">.</span><span class="n">transpose</span><span class="p">(),</span><span class="bp">self</span><span class="o">.</span><span class="n">parscaled</span><span class="p">))</span>  <span class="c1">#(X&#39;X)-1 s2</span>
+            
+            <span class="k">print</span> <span class="s1">&#39;Confidence intervals can be calculated based on covariance matrix, only done for SRC&#39;</span>
+
+            <span class="c1">#calculate the correlation matrix            </span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">corre</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cova</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cova</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cova</span><span class="p">[</span><span class="n">l</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">i</span><span class="p">]))</span>
+            <span class="k">print</span> <span class="s1">&#39;output of column &#39;</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="s1">&#39; done.&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;--------------------------&#39;</span>
+    
+        <span class="c1">#combine results in a ranking    </span>
+        <span class="n">RANK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                         
+        <span class="c1">#define the ranking, based on the SRC results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrix</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">RANK</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">RANK</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">place</span> <span class="o">=</span> <span class="n">RANK</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrix</span><span class="p">[</span><span class="n">place</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">i</span>
+        
+        <span class="k">if</span> <span class="n">rankbased</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="c1">#combine results in a ranking    </span>
+            <span class="n">RANK</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">SRRC</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                             
+            <span class="c1">#define the ranking, based on the SRC results</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrixSRRC</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">RANK</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">RANK</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">place</span> <span class="o">=</span> <span class="n">RANK</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrixSRRC</span><span class="p">[</span><span class="n">place</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">i</span>            </div>
+        
+<span class="c1">#        return self.SRC, self.cova, self.corre, self.rankmatrix</span>
+
+<div class="viewcode-block" id="SRCSensitivity.plot_tornado"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity.plot_tornado">[docs]</a>    <span class="k">def</span> <span class="nf">plot_tornado</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">SRC</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Make a Tornadplot of the parameter influence on the output;</span>
+<span class="sd">        SRC must be calculated first before plotting</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        outputid : int</span>
+<span class="sd">            output for which the tornado plot is made, starting from 0</span>
+<span class="sd">        SRC : boolean</span>
+<span class="sd">            SRC true means that SRC values are used, otherwise </span>
+<span class="sd">            the SRRC (ranked!) is used</span>
+<span class="sd">        *args, **kwargs : </span>
+<span class="sd">                arguments passed to the TornadoSensPlot function of the </span>
+<span class="sd">                plotfunctions_rev data</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        The parameters for the tornadosensplot are:</span>
+<span class="sd">            gridbins: int, number of gridlines</span>
+<span class="sd">            midwidth: float, width between the two axis, adapt to parameter names</span>
+<span class="sd">            setequal: boolean, if True, axis are equal lengths</span>
+<span class="sd">            plotnumb: boolean, if True, sensitiviteis are plotted</span>
+<span class="sd">            parfontsize: int, font size of the parameter names</span>
+<span class="sd">            bandwidth: width of the band</span>
+<span class="sd">        </span>
+<span class="sd">        Examples</span>
+<span class="sd">        ---------</span>
+<span class="sd">        &gt;&gt;&gt; reg.plot_tornado(outputid = 0,gridbins=3, midwidth=0.2, </span>
+<span class="sd">                             setequal=True, plotnumb=True, parfontsize=12, </span>
+<span class="sd">                             bandwidth=0.75)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">SRC</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">axleft</span><span class="p">,</span> <span class="n">axright</span>  <span class="o">=</span> <span class="n">TornadoSensPlot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">[:,</span><span class="n">outputid</span><span class="p">],</span>
+                                                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">axleft</span><span class="p">,</span> <span class="n">axright</span>  <span class="o">=</span> <span class="n">TornadoSensPlot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> 
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">SRRC</span><span class="p">[:,</span><span class="n">outputid</span><span class="p">],</span>
+                                                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span> <span class="p">)</span></div>
+        
+<div class="viewcode-block" id="SRCSensitivity.plot_SRC"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity.plot_SRC">[docs]</a>    <span class="k">def</span> <span class="nf">plot_SRC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">addval</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">outputid</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
+                <span class="n">ncols</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">outputnames</span><span class="o">=</span><span class="p">[],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot a barchart of the SRC values; actually a Tornadoplot in the </span>
+<span class="sd">        horizontal direction. More in the style of the other methods.</span>
+<span class="sd">        </span>
+<span class="sd">        TODO: make for subset of outputs, also in other methods; currently all or 1</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        width : float (0-1)</span>
+<span class="sd">            width of the bars in the barchart</span>
+<span class="sd">        addval : bool</span>
+<span class="sd">            if True, the sensitivity values are added to the graph</span>
+<span class="sd">        sortit : bool</span>
+<span class="sd">            if True, larger values (in absolute value) are plotted closest to</span>
+<span class="sd">            the y-axis      </span>
+<span class="sd">        outputid : int or all</span>
+<span class="sd">            the output to use whe multiple are compared; starts with 0</span>
+<span class="sd">            if all, the different outputs are plotted in subplots</span>
+<span class="sd">        ncols : int</span>
+<span class="sd">            number of columns to put the subplots in</span>
+<span class="sd">        outputnames :  list of strings</span>
+<span class="sd">            [] to plot no outputnames, otherwise list of strings equal to the</span>
+<span class="sd">            number of outputs</span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            passed to the matplotlib.bar</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fig : matplotlib.figure.Figure object</span>
+<span class="sd">            figure containing the output</span>
+<span class="sd">        ax1 : axes.AxesSubplot object</span>
+<span class="sd">            the subplot</span>
+<span class="sd">        </span>
+<span class="sd">        Examples</span>
+<span class="sd">        ---------</span>
+<span class="sd">        &gt;&gt;&gt; #plot single SRC</span>
+<span class="sd">        &gt;&gt;&gt; reg.plot_SRC(outputid=0, width=0.3, sortit = True, </span>
+<span class="sd">                         ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; #plot single SRC (assume 4 outputs)      </span>
+<span class="sd">        &gt;&gt;&gt; reg.plot_SRC(outputid = &#39;all&#39; , ncols = 2, </span>
+<span class="sd">                          outputnames=[&#39;o1&#39;,&#39;o2&#39;,&#39;o3&#39;,&#39;o4&#39;], ec=&#39;grey&#39;, fc=&#39;grey&#39;)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">outputid</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+                    <span class="c1">#define number of rows</span>
+            <span class="n">numsrc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">nrows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">numsrc</span><span class="p">,</span><span class="n">ncols</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">remainder</span><span class="p">(</span><span class="n">numsrc</span><span class="p">,</span><span class="n">ncols</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">nrows</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="c1">#prepare plots</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span> <span class="o">=</span> <span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="n">ncols</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span><span class="mi">40</span><span class="p">),</span> <span class="n">facecolor</span> <span class="o">=</span> <span class="s1">&#39;white&#39;</span><span class="p">)</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+        
+            <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+            <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">numsrc</span><span class="p">:</span>
+                    <span class="n">ax</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> 
+                                 <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span> <span class="n">addval</span> <span class="o">=</span> <span class="n">addval</span><span class="p">,</span> 
+                                 <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;SRC&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">outputnames</span><span class="p">:</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">outputnames</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+                <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;SRC values of output &#39;</span><span class="p">,</span><span class="n">outputid</span><span class="p">,</span><span class="s1">&#39; is shown in graph&#39;</span>
+            <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span> 
+            <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+            <span class="n">ax1</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span><span class="p">[:,</span><span class="n">outputid</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span> 
+                          <span class="n">addval</span> <span class="o">=</span> <span class="n">addval</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;SRC&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+            
+            <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span></div>
+
+<div class="viewcode-block" id="SRCSensitivity.latexresults"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity.latexresults">[docs]</a>    <span class="k">def</span> <span class="nf">latexresults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputnames</span><span class="p">,</span> <span class="n">rank</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;SRCtable.tex&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Print results SRC values or ranks in a &quot;deluxetable&quot; Latex</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        outputnames : list of strings</span>
+<span class="sd">            The names of the outputs in the colomns</span>
+<span class="sd">        rank : boolean</span>
+<span class="sd">            if rank is True, rankings or plotted in tabel instead of the </span>
+<span class="sd">            SRC values</span>
+<span class="sd">        name : str.tex</span>
+<span class="sd">            output file name; use .tex extension in the name</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#set an empty elment for the table above the parnames column        </span>
+        <span class="n">outputnames</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">towrite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrix</span>
+            <span class="n">captowrite</span> <span class="o">=</span> <span class="s1">&#39;Global SRC parameter ranking&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">towrite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span>
+            <span class="n">captowrite</span> <span class="o">=</span> <span class="s1">&#39;Standardized Regression Coefficients (SRC)&#39;</span>
+                
+        <span class="n">no</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>               
+        
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">no</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">justs</span><span class="o">=</span><span class="s1">&#39;l&#39;</span><span class="o">+</span><span class="s1">&#39;c&#39;</span><span class="o">*</span><span class="n">no</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="n">captowrite</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;tab:SRCresult&quot;</span><span class="p">)</span>
+
+        <span class="n">t</span><span class="o">.</span><span class="n">add_header_row</span><span class="p">(</span><span class="n">outputnames</span><span class="p">)</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">[:]]</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span> <span class="c1">#only ONE output</span>
+            <span class="n">col</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">towrite</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>                           <span class="c1">#MULTIPLE outputs</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rankmatrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">col</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">towrite</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="k">print</span> <span class="n">col</span>
+        
+        <span class="n">t</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">sigfigs</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#,col3</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">print_table</span><span class="p">(</span><span class="n">fout</span><span class="p">)</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s1">&#39;Latex Results latex table file saved in directory </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>        </div>
+
+<div class="viewcode-block" id="SRCSensitivity.txtresults"><a class="viewcode-back" href="../../sensitivity.html#pystran.SRCSensitivity.txtresults">[docs]</a>    <span class="k">def</span> <span class="nf">txtresults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputnames</span><span class="p">,</span> <span class="n">rank</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;SRCresults.txt&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Results rankmatrix in txt file to load in eg excel</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        outputnames : list of strings</span>
+<span class="sd">            The names of the outputs in the colomns</span>
+<span class="sd">        rank : boolean</span>
+<span class="sd">            if rank is True, rankings or plotted in tabel instead of the </span>
+<span class="sd">            SRC values            </span>
+<span class="sd">        name : str.txt</span>
+<span class="sd">            output file name; use .txt extension in the name </span>
+
+<span class="sd">        &#39;&#39;&#39;</span>     
+        <span class="c1">#set an empty elment for the table above the parnames column        </span>
+
+        <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">towrite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rankmatrix</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">towrite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SRC</span>      
+            
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="c1">#Write output names</span>
+<span class="c1">#        fout.write(&#39;Par \t mu \t mustar \t sigma \n&#39;)</span>
+        
+        <span class="n">ott</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> &#39;</span><span class="o">+</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">outputnames</span><span class="p">]</span>
+        <span class="n">ostring</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">oname</span> <span class="ow">in</span> <span class="n">ott</span><span class="p">:</span>
+            <span class="n">ostring</span><span class="o">+=</span><span class="n">oname</span>
+        
+        <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Par&#39;</span><span class="o">+</span><span class="n">ostring</span><span class="o">+</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+            <span class="n">ntt</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">towrite</span><span class="p">[</span><span class="n">i</span><span class="p">,:]]</span>
+            <span class="n">nstring</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">nname</span> <span class="ow">in</span> <span class="n">ntt</span><span class="p">:</span>
+                <span class="n">nstring</span><span class="o">+=</span><span class="n">nname</span>           
+            <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parmap</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">nstring</span><span class="p">))</span>                                            
+        <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s1">&#39;txt Results file saved in directory </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span></div></div>
+
+
+
+<span class="c1">#LINALG MODEL</span>
+<span class="c1">#ai=np.array([78, 12, 0.5, 2, 97, 33])</span>
+<span class="c1">#ai=[78, 0.001, 0.5, 1.5, 0.7, 1.]      </span>
+<span class="c1">#ai=[0.1, 0.8, 0.5, 0.2, 97,1.1]              </span>
+<span class="c1">#Xi = [(0.0,1.0,r&#39;$X_1$&#39;),(0.0,1.0,r&#39;$X_2$&#39;),(0.0,1.0,r&#39;$X_3$&#39;),</span>
+<span class="c1">#      (0.0,1.0,r&#39;$X_4$&#39;), (0.0,1.0,r&#39;$X_5$&#39;),(0.,1,r&#39;$X_6$&#39;)]        </span>
+<span class="c1">#reg=RegressionSensitivity(Xi)</span>
+<span class="c1">#reg.PrepareSample(1000)  </span>
+<span class="c1">#output = np.zeros((reg.parset2run.shape[0],1))</span>
+<span class="c1">#for i in range(reg.parset2run.shape[0]):</span>
+<span class="c1">#    output[i,:] = analgfunc(ai,reg.parset2run[i,:])</span>
+
+<span class="c1">##SIMPLE LINEAR</span>
+<span class="c1">#ai=np.array([10,10,10,10,10,10])</span>
+<span class="c1">#Xi = [(8.0,9.0,r&#39;$X_1$&#39;),(7.0,10.0,r&#39;$X_2$&#39;),(6.0,11.0,r&#39;$X_3$&#39;),</span>
+<span class="c1">#      (5.0,12.0,r&#39;$X_4$&#39;), (4.0,13.0,r&#39;$X_5$&#39;),(3.0,4.,r&#39;$X_6$&#39;)]      </span>
+<span class="c1">#reg=SRCSensitivity(Xi)</span>
+<span class="c1">#reg.PrepareSample(1000)  </span>
+<span class="c1">#output = np.zeros((reg.parset2run.shape[0],1))</span>
+<span class="c1">#for i in range(reg.parset2run.shape[0]):</span>
+<span class="c1">#    output[i,:] = simplelinear(ai,reg.parset2run[i,:])</span>
+<span class="c1">##    output[i,:] = harder(ai,reg.parset2run[i,:])</span>
+<span class="c1">##</span>
+<span class="c1">##muloutput=np.tile(output,5)</span>
+<span class="c1">#reg.Calc_SRC(output, rankbased=True)</span>
+<span class="c1">#print reg.sumcheck</span>
+<span class="c1">##print  reg.SRRC</span>
+<span class="c1">##</span>
+<span class="c1">###reg.plot_tornado()</span>
+<span class="c1">#reg.SRC[2,0]=-0.6</span>
+<span class="c1">#reg.SRC[2,3]=-0.2</span>
+<span class="c1">###TornadoSensPlot(reg.namelist,reg.SRC[:,0], gridbins=3, midwidth=0.2, setequal=True, plotnumb=True, parfontsize=16, bandwidth=0.3) </span>
+<span class="c1">#reg.plot_SRC(outputid = &#39;all&#39; ,ncols = 2, outputnames=[&#39;o1&#39;,&#39;o2&#39;,&#39;o3&#39;,&#39;o4&#39;,&#39;o5&#39;], ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="c1">#reg.latexresults(owutputnames=[&#39;o1&#39;,&#39;o2&#39;,&#39;o3&#39;,&#39;o4&#39;,&#39;o5&#39;],rank=True)</span>
+<span class="c1">#reg.txtresults(outputnames=[&#39;o1&#39;,&#39;o2&#39;,&#39;o3&#39;,&#39;o4&#39;,&#39;o5&#39;],rank=False)</span>
+<span class="c1">#reg.quickscatter(output)</span>
+<span class="c1">#reg.scattercheck(reg.parset2run, output, ncols=3, marker=&#39;o&#39;, </span>
+<span class="c1">#                          edgecolor=&#39;black&#39;, facecolor=&#39;none&#39;, s=30)</span>
+<span class="c1">#reg.Calc_SRC(output, rankbased=False)</span>
+<span class="c1">#</span>
+<span class="c1">##reg.plot_tornado(outputid = 0,gridbins=3, midwidth=0.2, setequal=True, plotnumb=True, parfontsize=12, bandwidth=0.75)</span>
+<span class="c1">#reg.plot_SRC(outputid=0, width=0.3, sortit = True, ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, S. Van Hoey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

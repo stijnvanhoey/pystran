@@ -1,0 +1,354 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pystran.sensitivity_rsa &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pystran.sensitivity_rsa</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author: VHOEYS</span>
+<span class="sd">development supported by Flemish Institute for Technological Research (VITO)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.ma</span> <span class="kn">as</span> <span class="nn">ma</span>
+
+<span class="kn">from</span> <span class="nn">sensitivity_base</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="kn">from</span> <span class="nn">sobol_lib</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">extrafunctions</span> <span class="kn">import</span> <span class="o">*</span>
+
+<div class="viewcode-block" id="RegionalSensitivity"><a class="viewcode-back" href="../../sensitivity.html#pystran.RegionalSensitivity">[docs]</a><span class="k">class</span> <span class="nc">RegionalSensitivity</span><span class="p">(</span><span class="n">SensitivityAnalysis</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Regional Sensitivity Analysis (Monte Carlo Filtering).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">    ParsIn : list</span>
+<span class="sd">        either a list of (min,max,&#39;name&#39;) values, </span>
+<span class="sd">        [(min,max,&#39;name&#39;),(min,max,&#39;name&#39;),...(min,max,&#39;name&#39;)]</span>
+<span class="sd">        or a list of ModPar instances</span>
+<span class="sd">        </span>
+<span class="sd">    ModelType : pyFUSE | PCRaster | external</span>
+<span class="sd">        Give the type of model working with</span>
+<span class="sd">        </span>
+<span class="sd">    Attributes</span>
+<span class="sd">    -------------</span>
+
+<span class="sd">        </span>
+<span class="sd">    Examples</span>
+<span class="sd">    ------------</span>
+
+<span class="sd">    </span>
+<span class="sd">    Notes</span>
+<span class="sd">    --------</span>
+<span class="sd">    The method basically ranks/selects parameter sets based on a evaluation </span>
+<span class="sd">    criterion and checks the marginal influence of the different parameters</span>
+<span class="sd">    on this criterion. In literature, the method is known as Regional </span>
+<span class="sd">    Sensitivity Analysis (RSA, [R1]_), but also describe in [R2]_ and referred</span>
+<span class="sd">    to as Monte Carlo Filtering. Intially introduced by [R1]_ with a split</span>
+<span class="sd">    between behavioural and non-behavioural accombined with a Kolmogorov-</span>
+<span class="sd">    smirnov rank test (necessary, but nof sufficient to determine insensitive),</span>
+<span class="sd">    applied with ten-bins split of the behavioural by [R3]_ and a ten bins</span>
+<span class="sd">    split of the entire parameter range by [R4]_.</span>
+<span class="sd">    </span>
+<span class="sd">    The method is directly connected to the GLUE approach, using the </span>
+<span class="sd">    behavioural simulation to define prediction limits of the model output. </span>
+<span class="sd">    Therefore, this class is used as baseclass for the GLUE uncertainty.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ------------</span>
+<span class="sd">    ..  [R1] Hornberger, G.M., and R.C. Spear. An Approach to the Preliminary </span>
+<span class="sd">        Analysis of Environmental Systems. Journal of Environmental </span>
+<span class="sd">        Management 12 (1981): 7–18.</span>
+<span class="sd">    ..  [R2] Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo, </span>
+<span class="sd">        Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano </span>
+<span class="sd">        Tarantola. Global Sensitivity Analysis, The Primer. </span>
+<span class="sd">        John Wiley &amp; Sons Ltd, 2008.</span>
+<span class="sd">    ..  [R3] Freer, Jim, Keith Beven, and Bruno Ambroise. Bayesian Estimation </span>
+<span class="sd">        of Uncertainty in Runoff Prediction and the Value of Data: An </span>
+<span class="sd">        Application of the GLUE Approach. Water Resources Research 32, </span>
+<span class="sd">        no. 7 (1996): 2161. </span>
+<span class="sd">        http://www.agu.org/pubs/crossref/1996/95WR03723.shtml.</span>
+<span class="sd">    ..  [R4] Wagener, Thorsten, D. P. Boyle, M. J. Lees, H. S. Wheater, </span>
+<span class="sd">        H. V. Gupta, and S. Sorooshian. A Framework for Development and </span>
+<span class="sd">        Application of Hydrological Models. Hydrology and Earth System </span>
+<span class="sd">        Sciences 5, no. 1 (2001): 13–26.</span>
+<span class="sd"> </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">,</span> <span class="n">ModelType</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span><span class="p">):</span>
+        <span class="n">SensitivityAnalysis</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_methodname</span> <span class="o">=</span> <span class="s1">&#39;RegionalSensitivityAnalysis&#39;</span>
+        
+        <span class="k">if</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;pyFUSE&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is built up by the pyFUSE environment&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;external&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>           
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is externally run&#39;</span>            
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;PCRaster&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;PCRasterPython&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a PCRasterPython Framework instance&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;testmodel&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;testmodel&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a testmodel&#39;</span>            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Not supported model type&#39;</span><span class="p">)</span>
+        
+<div class="viewcode-block" id="RegionalSensitivity.PrepareSample"><a class="viewcode-back" href="../../sensitivity.html#pystran.RegionalSensitivity.PrepareSample">[docs]</a>    <span class="k">def</span> <span class="nf">PrepareSample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="p">,</span> <span class="n">seedin</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sampling of the parameter space. No specific sampling preprocessing</span>
+<span class="sd">        procedure is needed, only a general Monte Carlo sampling of the </span>
+<span class="sd">        parameter space is expected. To improve the sampling procedure, </span>
+<span class="sd">        Latin Hypercube or Sobol pseudo-random sampling can be preferred. The </span>
+<span class="sd">        latter is used in the pySTAN framework, but using the ModPar class</span>
+<span class="sd">        individually enables Latin Hypercube and random sampling.</span>
+<span class="sd">        </span>
+<span class="sd">        Currently only uniform distributions are supported by the framework,</span>
+<span class="sd">        but the Modpar class enables other dsitributions to sample the </span>
+<span class="sd">        parameter space and bypassing the sampling here.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        nbaseruns : int</span>
+<span class="sd">            number of samples to take for the analysis; highly dependent from</span>
+<span class="sd">            the total number of input factors. range of 10000s is minimum.</span>
+<span class="sd">        seedin : int</span>
+<span class="sd">            seed to start the Sobol sampling from. This enables to increase</span>
+<span class="sd">            the sampling later on, by starting from the previous seedout.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        seed_out : int</span>
+<span class="sd">            the last seed, useful for later use</span>
+<span class="sd">        parset2run : ndarray</span>
+<span class="sd">            parameters to run the model (nbaseruns x ndim)</span>
+<span class="sd">            </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        * Do the Sobol sampling always for the entire parameter space at the </span>
+<span class="sd">        same time, for LH this doesn&#39;t matter</span>
+<span class="sd">        * Never extend the sampling size with using the same seed, since this</span>
+<span class="sd">        generates duplicates of the samples</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="o">=</span> <span class="n">nbaseruns</span>
+        <span class="c1"># generate a (N,2k) matrix with </span>
+        <span class="n">FacIn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span>
+
+        <span class="n">Par2run</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nbaseruns</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">))</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>   
+            <span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">seed_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">i4_sobol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span> <span class="n">seedin</span><span class="p">)</span>
+            <span class="n">Par2run</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">r</span>        
+            <span class="n">seedin</span> <span class="o">=</span> <span class="n">seed_out</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+            <span class="n">Par2run</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rescale</span><span class="p">(</span><span class="n">Par2run</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">FacIn</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> 
+                                        <span class="n">FacIn</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>    
+        <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span> <span class="o">=</span> <span class="n">Par2run</span>
+        
+        <span class="k">return</span> <span class="n">seed_out</span>        </div>
+        
+<span class="c1"># In the new version of GLUE, the idea is that the the output-matrix is put </span>
+<span class="c1"># in memory and no copy is made by deleting certain rows. </span>
+<span class="c1"># Selecting certain criteria only prepares a mask for the masked </span>
+<span class="c1"># array </span>
+
+<span class="c1">#other possibility is the use of the hdf5-stuff, waarbij gesaved en dan telkens</span>
+<span class="c1"># lijnen nemen naar believen..</span>
+
+    <span class="c1">#first delete the outputs with OF=nan or OF= inf/-inf</span>
+<div class="viewcode-block" id="RegionalSensitivity.checkprobs"><a class="viewcode-back" href="../../sensitivity.html#pystran.RegionalSensitivity.checkprobs">[docs]</a>    <span class="k">def</span> <span class="nf">checkprobs</span><span class="p">(</span><span class="n">arrtocheck</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">arrtocheck</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RegionalSensitivity.select_behavioural"><a class="viewcode-back" href="../../sensitivity.html#pystran.RegionalSensitivity.select_behavioural">[docs]</a>    <span class="k">def</span> <span class="nf">select_behavioural</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;treshold&#39;</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> 
+                           <span class="n">percBest</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="bp">True</span> <span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="bp">True</span><span class="p">):</span> <span class="c1">#ofwel gewoon beide op None en wat niet None, dat doorrekenen</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Select bevahvioural parameter sets, based on output evaluation </span>
+<span class="sd">        criterion used. </span>
+<span class="sd">        w</span>
+<span class="sd">        The algorithm makes only a &#39;mask&#39; for further operation, in order to</span>
+<span class="sd">        avoid memory overload by copying matrices</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        threshold : </span>
+<span class="sd">        </span>
+<span class="sd">        output : ndarray</span>
+<span class="sd">            Nx1</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Method can be &#39;treshold&#39; based or &#39;percentage&#39; based</span>
+<span class="sd">        All arrays must have same dimension in 0-direction (vertical); output-function only 1 column</span>
+<span class="sd">        InputPar is nxnpar; output is nx1; Output nxnTimesteps</span>
+<span class="sd">        this most be done for each structure independently</span>
+
+<span class="sd">        Output of OFfunctions/Likelihoods normalised or not (do it if different likelihoods have to be plotted together)</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1">#by using copy, reference is used and no copy (memory-use)</span>
+        <span class="c1">#keep_mask is false, so every value is used</span>
+        <span class="c1">#first mask the outputs with OF=nan or OF= inf/-inf</span>
+        <span class="k">if</span> <span class="n">mask</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="c1">#self.ma_output = ma.masked_invalid(output, copy=False, keep_mask = False)</span>
+            <span class="c1">#self.ma_pars = ma.masked_invalid(self.parset2run, copy=False, keep_mask = False)</span>
+    
+            <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">masked_invalid</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ma_pars</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">masked_invalid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">=</span> <span class="n">output</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ma_pars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span>
+
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;treshold&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">mask</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ma_pars</span> <span class="o">=</span> <span class="n">ma</span><span class="o">.</span><span class="n">masked_where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_pars</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ma_pars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_pars</span>
+            <span class="n">InputPar_Behav</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_pars</span>
+            <span class="n">output_Behav</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ma_output</span>
+
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;percentage&#39;</span><span class="p">:</span>
+            <span class="n">nr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">InputPar</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">argsort</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>  <span class="c1">#Geeft indices van de slechtste eerst weer</span>
+            <span class="n">NbIndic</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">percBest</span><span class="p">)</span><span class="o">*</span><span class="n">ind</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>  <span class="c1">#Percentage Indices selecteren</span>
+            <span class="n">indBad</span><span class="o">=</span><span class="n">ind</span><span class="p">[:</span><span class="n">NbIndic</span><span class="p">]</span>   <span class="c1">#Slechtste bepalen om weg te doen</span>
+            <span class="n">output_Behav</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">indBad</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">InputPar_Behav</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">InputPar</span><span class="p">,</span> <span class="n">indBad</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39; Choose appropriate method: treshold or percentage&#39;</span>
+
+        <span class="c1">#Normaliseren van de Objectieffunctie 1!</span>
+        <span class="k">if</span> <span class="n">norm</span><span class="o">==</span><span class="bp">True</span><span class="p">:</span>
+            <span class="n">Tempor</span><span class="o">=</span><span class="n">output_Behav</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span><span class="n">output_Behav</span>
+            <span class="n">output_Behav</span><span class="o">=</span><span class="n">Tempor</span><span class="o">/</span><span class="n">Tempor</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="c1">#print &#39;controle voor de som: %f&#39; %output_Behav.sum()</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">InputPar_Behav</span><span class="p">,</span><span class="n">output_Behav</span><span class="p">]</span></div></div>
+
+   
+
+
+<span class="c1">#ai=[78, 12, 0.5, 2, 97, 33]</span>
+<span class="c1">#Xi = [(2.0,5.0,r&#39;$X_1$&#39;),(0.0,1.0,r&#39;$X_2$&#39;),(0.0,1.0,r&#39;$X_3$&#39;),(0.0,1.0,r&#39;$X_4$&#39;),</span>
+<span class="c1">#      (0.0,1.0,r&#39;$X_5$&#39;),(0.0,1.0,r&#39;$X_6$&#39;)]</span>
+<span class="c1">#     </span>
+<span class="c1">#sm = RegionalSensitivity(Xi,ModelType = &#39;testmodel&#39;)</span>
+<span class="c1">#sm.PrepareSample(nbaseruns=1000)</span>
+
+                                                                                   
+<span class="c1">##sm.Optimized_diagnostic(width=0.15)</span>
+<span class="c1">#sm.runTestModel(ai)</span>
+
+<span class="c1">##run the model</span>
+<span class="c1">#output = np.zeros((sm.OptOutMatrix.shape[0],1))</span>
+<span class="c1">#for i in range(sm.OptOutMatrix.shape[0]):</span>
+<span class="c1">#     output[i,:] = analgfunc(ai,sm.OptOutMatrix[i,:])</span>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, S. Van Hoey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,2228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Sensitivity Analysis &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="index.html" />
+    <link rel="prev" title="Model Parameters" href="parameter.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parameter.html" title="Model Parameters"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pystran 0.1.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sensitivity-analysis">
+<h1>Sensitivity Analysis<a class="headerlink" href="#sensitivity-analysis" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sensitivity-base-class">
+<h2>Sensitivity Base class<a class="headerlink" href="#sensitivity-base-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pystran.SensitivityAnalysis">
+<em class="property">class </em><code class="descclassname">pystran.</code><code class="descname">SensitivityAnalysis</code><span class="sig-paren">(</span><em>parsin</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_base.html#SensitivityAnalysis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SensitivityAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for the Sensitivity Analysis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>parsin</strong> : list</p>
+<blockquote class="last">
+<div><p>ModPar class instances in list or list of (min, max,&#8217;name&#8217;)-tuples</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="pystran.SensitivityAnalysis.print_methods">
+<em class="property">static </em><code class="descname">print_methods</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_base.html#SensitivityAnalysis.print_methods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SensitivityAnalysis.print_methods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overview of the used methods</p>
+</dd></dl>
+
+</dd></dl>
+
+<div class="section" id="interaction-with-models">
+<h3>Interaction with models<a class="headerlink" href="#interaction-with-models" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="morris-screening-method">
+<h2>Morris Screening method<a class="headerlink" href="#morris-screening-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-morris-screening-methods">
+<h3>Main Morris screening methods<a class="headerlink" href="#main-morris-screening-methods" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pystran.MorrisScreening">
+<em class="property">class </em><code class="descclassname">pystran.</code><code class="descname">MorrisScreening</code><span class="sig-paren">(</span><em>parsin</em>, <em>ModelType='external'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening" title="Permalink to this definition">¶</a></dt>
+<dd><p>Morris screening method, with the improved sampling strategy,
+selecting a subset of the trajectories to improve the sampled space.
+Working with groups is possible.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>parsin</strong> : list</p>
+<blockquote>
+<div><p>either a list of (min,max,&#8217;name&#8217;) values,
+[(min,max,&#8217;name&#8217;),(min,max,&#8217;name&#8217;),...(min,max,&#8217;name&#8217;)]
+or a list of ModPar instances</p>
+</div></blockquote>
+<p><strong>ModelType</strong> : pyFUSE | PCRaster | external</p>
+<blockquote class="last">
+<div><p>Give the type of model working withµ</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<dl class="docutils">
+<dt>Original Matlab code from:</dt>
+<dd><a class="reference external" href="http://sensitivity-analysis.jrc.it/software/index.htm">http://sensitivity-analysis.jrc.it/software/index.htm</a></dd>
+</dl>
+<p>Original method described in <a class="reference internal" href="#m1" id="id1">[M1]</a>, improved by the optimization of <a class="reference internal" href="#m2" id="id2">[M2]</a>.
+The option to work with groups is added, as described in <a class="reference internal" href="#m2" id="id3">[M2]</a>.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="m1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[M1]</a></td><td>Morris, Max D. Factorial Sampling Plans for Preliminary Computational
+Experiments. Technometrics 33, no. 2 (1991): 161–174.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="m2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[M2]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id3">2</a>, <a class="fn-backref" href="#id8">3</a>)</em> Campolongo, Francesca, Jessica Cariboni, and Andrea Saltelli.
+An Effective Screening Design for Sensitivity Analysis of Large Models.
+Environmental Modelling &amp; Software 22, no. 10 (October 2007): 1509–1518.
+<a class="reference external" href="http://linkinghub.elsevier.com/retrieve/pii/S1364815206002805">http://linkinghub.elsevier.com/retrieve/pii/S1364815206002805</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="m3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[M3]</td><td><em>(<a class="fn-backref" href="#id6">1</a>, <a class="fn-backref" href="#id7">2</a>)</em> Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo,
+Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano Tarantola.
+Global Sensitivity Analysis, The Primer. John Wiley &amp; Sons Ltd, 2008.</td></tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Xi</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">5.0</span><span class="p">,</span><span class="s1">r&#39;$X_1$&#39;</span><span class="p">),(</span><span class="mf">4.0</span><span class="p">,</span><span class="mf">7.0</span><span class="p">,</span><span class="s1">r&#39;$X_2$&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">r&#39;$X_3$&#39;</span><span class="p">),</span>
+<span class="go">          (0.0,1.0,r&#39;$X_4$&#39;), (0.0,1.0,r&#39;$X_5$&#39;),(0.5,0.9,r&#39;$X_6$&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Set up the morris class instance with uncertain factors Xi</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span> <span class="o">=</span> <span class="n">MorrisScreening</span><span class="p">(</span><span class="n">Xi</span><span class="p">,</span><span class="n">ModelType</span> <span class="o">=</span> <span class="s1">&#39;external&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># calculate an optimized set of parameter sets to run model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">OptMatrix</span><span class="p">,</span> <span class="n">OptOutVec</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Optimized_Groups</span><span class="p">(</span><span class="n">nbaseruns</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="go">                                           intervals = 4, noptimized=4,</span>
+<span class="go">                                           Delta = 0.4)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Check the quality of the selected trajects</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">Optimized_diagnostic</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#RUN A MODEL AND GET OUTPUT (EXTERNAL) -&gt; get output</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#Calculate the Morris screening diagnostics</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">Morris_Measure_Groups</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#plot a barplot of mu, mustar and sigma (edgecolor and facecolor grey)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">plotmu</span><span class="p">(</span><span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">plotmustar</span><span class="p">(</span><span class="n">outputid</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">plotsigma</span><span class="p">(</span><span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#plot the mu* sigma plain</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">plotmustarsigma</span><span class="p">(</span><span class="n">zoomperc</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">outputid</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">loc</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#export the results in txt file</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">txtresults</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;MorrisTestOut.txt&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#export the results in tex-table</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">latexresults</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;MorrisTestOut.tex&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="95%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>_ndim</td>
+<td>( int) number of factors examined. In case the groups are chosen the number of factors is stores in NumFact and sizea becomes the number of created groups, (k)</td>
+</tr>
+<tr class="row-even"><td>NumFact</td>
+<td>(int) number of factors examined in the case when groups are chosen</td>
+</tr>
+<tr class="row-odd"><td>intervals(p)</td>
+<td>(int) number of intervals considered in (0, 1)</td>
+</tr>
+<tr class="row-even"><td>UB</td>
+<td>(ndarray) Upper Bound for each factor in list or array, (sizea,1)</td>
+</tr>
+<tr class="row-odd"><td>LB</td>
+<td>(ndarray) Lower Bound for each factor in list or array, (sizea,1)</td>
+</tr>
+<tr class="row-even"><td>GroupNumber</td>
+<td>(int) Number of groups (eventually 0)</td>
+</tr>
+<tr class="row-odd"><td>GroupMat</td>
+<td>(ndarray) Array which describes the chosen groups. Each column represents a group and its elements are set to 1 in correspondence of the factors that belong to the fixed group. All the other elements are zero, (NumFact,GroupNumber)</td>
+</tr>
+<tr class="row-even"><td>Delta</td>
+<td>(float) jump value to calculate screening</td>
+</tr>
+<tr class="row-odd"><td>intervals</td>
+<td>(int) number of intervals used in the sampling</td>
+</tr>
+<tr class="row-even"><td>noptimized</td>
+<td>(int) r-value of the number of base runs are done in the optimize sampling</td>
+</tr>
+<tr class="row-odd"><td>OutMatrix</td>
+<td>(ndarray) not-optimized sample matrix</td>
+</tr>
+<tr class="row-even"><td>OutFact</td>
+<td>(ndarray) not-optimzed matrix of changing factors</td>
+</tr>
+<tr class="row-odd"><td>Groupnumber</td>
+<td>(int) number of groups used</td>
+</tr>
+<tr class="row-even"><td>sizeb</td>
+<td>(int) when using groups, sizeb is determined by the number of groups, otherwise the number of factors</td>
+</tr>
+<tr class="row-odd"><td>OptMatrix_b</td>
+<td>(ndarray) the not-adapted version of the OptMatrix, with all sampled values between, 0 and 1</td>
+</tr>
+<tr class="row-even"><td>parset2run</td>
+<td>(ndarrar) every row is a parameter set to run the model for. All sensitivity methods have this attribute to interact with base-class running</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pystran.MorrisScreening.Morris_Measure_Groups">
+<code class="descname">Morris_Measure_Groups</code><span class="sig-paren">(</span><em>Output</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.Morris_Measure_Groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.Morris_Measure_Groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Morris measures mu, mustar and sigma,
+the calculations with groups are in beta-version!</p>
+<p>Can be used for multiple outputs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>Output</strong> : ndarray</p>
+<blockquote>
+<div><p>if multiple outputs, every output in different column; the length
+of the outputs is the same as the optmatrix sampled</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>SAmeas</strong> : ndarray (_ndim*number of outputs, noptimized)</p>
+<blockquote>
+<div><p>matrix with the elemenary effects, the factors in the rows,
+with different outputs after eachother; the columns take the
+repititions</p>
+</div></blockquote>
+<p><strong>OutMatrix</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Matrix of the output(s) values in correspondence of each point
+of each trajectory. For every output column, the factors are
+calculated and [Mu*, Mu, StDev] are put in the row
+When using groups, only Mu* for every group is given</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The algorithm uses the self.OptOutMatrix and self.OptOutFact as the
+input calculations, but these can be given other input combinations too
+as long as it follows the Morris-method</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.MorrisScreening.Optimized_Groups">
+<code class="descname">Optimized_Groups</code><span class="sig-paren">(</span><em>nbaseruns=500</em>, <em>intervals=4</em>, <em>noptimized=10</em>, <em>GroupMat=array([]</em>, <em>dtype=float64)</em>, <em>Delta='default'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.Optimized_Groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.Optimized_Groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimization in the choice of trajectories for the Morris experiment.
+Starting from an initial set of nbaseruns, a set of noptimized runs
+is selected to use for the screening techique</p>
+<p>Groups can be used to evaluate parameters together</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int (default 500)</p>
+<blockquote>
+<div><p>Total number of trajectories</p>
+</div></blockquote>
+<p><strong>intervals</strong> : int (default 4)</p>
+<blockquote>
+<div><p>Number of levels</p>
+</div></blockquote>
+<p><strong>noptimized</strong> : int (default 10)</p>
+<blockquote>
+<div><p>Final number of optimal trajectories</p>
+</div></blockquote>
+<p><strong>GroupMat</strong> : [NumFact,NumGroups]</p>
+<blockquote>
+<div><p>Matrix describing the groups. Each column represents a group and
+its elements are set to 1 in correspondence of the factors that
+belong to the fixed group. All the other elements are zero.</p>
+</div></blockquote>
+<p><strong>Delta</strong> : &#8216;default&#8217;<a href="#id4"><span class="problematic" id="id5">|</span></a>float (0-1)</p>
+<blockquote>
+<div><p>When default, the value is calculated from the p value (intervals),
+otherwise the given number is taken</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>OptMatrix/ self.OptOutMatrix</strong> : ndarray</p>
+<blockquote>
+<div><p>Optimized sampled values giving the matrix too run the model for</p>
+</div></blockquote>
+<p><strong>OptOutVec/ self.OptOutFact</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Optimized sampled values giving the matrix indicating the factor
+changed at a specific line</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The combination of Delta and intervals is important to get an
+good overview. The user is directed to <a class="reference internal" href="#m3" id="id6">[M3]</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.MorrisScreening.Sampling_Function_2">
+<code class="descname">Sampling_Function_2</code><span class="sig-paren">(</span><em>nbaseruns</em>, <em>LB</em>, <em>UB</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.Sampling_Function_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.Sampling_Function_2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python version of the Morris sampling function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int</p>
+<blockquote>
+<div><p>sample size</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">OutMatrix(sizeb*r, sizea) :</p>
+<blockquote>
+<div><p>for the entire sample size computed In(i,j) matrices, values to
+run model for</p>
+</div></blockquote>
+<p>OutFact(sizea*r,1) :</p>
+<blockquote class="last">
+<div><p>for the entire sample size computed Fact(i,1) vectors, indicates
+the factor changing at specific line</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>B0 is constructed as in Morris design when groups are not considered.
+When groups are considered the routine follows the following steps</p>
+<p>1. Creation of P0 and DD0 matrices defined in Morris for the groups.
+This means that the dimensions of these 2 matrices are
+(GroupNumber,GroupNumber).</p>
+<p>2. Creation of AuxMat matrix with (GroupNumber+1,GroupNumber)
+elements.</p>
+<p>3. Definition of GroupB0 starting from AuxMat, GroupMat
+and P0.</p>
+<p>4. The final B0 for groups is obtained as [ones(sizeb,1)*x0&#8217; + GroupB0].
+The P0 permutation is present in GroupB0 and it&#8217;s not necessary to
+permute the matrix (ones(sizeb,1)*x0&#8217;) because it&#8217;s already randomly
+created.</p>
+<p>Adapted from the matlab version of 15 November 2005 by J.Cariboni</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="m4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[M4]</td><td>A. Saltelli, K. Chan, E.M. Scott, Sensitivity Analysis
+on page 68 ss</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="m5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[M5]</td><td><ol class="first last upperalpha simple" start="6">
+<li>Campolongo, J. Cariboni, JRC - IPSC Ispra, Varese, IT</li>
+</ol>
+</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.MorrisScreening.runTestModel">
+<code class="descname">runTestModel</code><span class="sig-paren">(</span><em>ai</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.runTestModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.runTestModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a testmodel</p>
+<p>Use a testmodel to get familiar with the method and try things out. The
+implemented model is the G Sobol function: testfunction with
+analytical solution, moire information, see <a class="reference internal" href="#m3" id="id7">[M3]</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>ai</strong> : list</p>
+<blockquote class="last">
+<div><p>list with the input factors (equal size as number of factors)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ai</span><span class="o">=</span><span class="p">[</span><span class="mi">78</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">97</span><span class="p">,</span> <span class="mi">33</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xi</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">r&#39;$X_1$&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">r&#39;$X_2$&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">r&#39;$X_3$&#39;</span><span class="p">),</span>
+<span class="go">          (0.0,1.0,r&#39;$X_4$&#39;),(0.0,1.0,r&#39;$X_5$&#39;),(0.0,1.0,r&#39;$X_6$&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#set up the morris screening class</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span> <span class="o">=</span> <span class="n">MorrisScreening</span><span class="p">(</span><span class="n">Xi</span><span class="p">,</span><span class="n">ModelType</span> <span class="o">=</span> <span class="s1">&#39;testmodel&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#Get an optimized set of trajectories</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">OptMatrix</span><span class="p">,</span> <span class="n">OptOutVec</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">Optimized_Groups</span><span class="p">(</span><span class="n">nbaseruns</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="go">                                               intervals = 4,</span>
+<span class="go">                                               noptimized=4,</span>
+<span class="go">                                               Delta = 0.4)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#compare the selected trajects with the general</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">Optimized_diagnostic</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#run a testmodel and get the outputs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">runTestModel</span><span class="p">(</span><span class="n">ai</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="testing-the-selected-traject-optimization">
+<h3>Testing the selected traject optimization<a class="headerlink" href="#testing-the-selected-traject-optimization" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="pystran.MorrisScreening.Optimized_diagnostic">
+<code class="descclassname">MorrisScreening.</code><code class="descname">Optimized_diagnostic</code><span class="sig-paren">(</span><em>width=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.Optimized_diagnostic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.Optimized_diagnostic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the optimized trajects in their space distirbution,
+evaluation is done based on the [0-1] boundaries of the sampling</p>
+<p>Returns quality measure and 2 figures to compare the optimized version</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>width</strong> : float</p>
+<blockquote class="last">
+<div><p>width of the bars in the plot (default 0.1)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">Optimized_diagnostic</span><span class="p">()</span>
+<span class="go">The quality of the sampling strategy changed from 0.76 with the old</span>
+<span class="go">strategy to 0.88 for the optimized strategy</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_Morris_oldsampl.png"><img alt="_images/ex_Morris_oldsampl.png" src="_images/ex_Morris_oldsampl.png" style="width: 400.0px; height: 300.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_Morris_optsampl.png"><img alt="_images/ex_Morris_optsampl.png" src="_images/ex_Morris_optsampl.png" style="width: 400.0px; height: 300.0px;" /></a>
+</div>
+<div class="section" id="output-plots-and-exports">
+<h3>Output plots and exports<a class="headerlink" href="#output-plots-and-exports" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="pystran.MorrisScreening.plotmu">
+<code class="descclassname">MorrisScreening.</code><code class="descname">plotmu</code><span class="sig-paren">(</span><em>width=0.5</em>, <em>addval=True</em>, <em>sortit=True</em>, <em>outputid=0</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.plotmu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.plotmu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a barchart of the given mu</p>
+<p>mu is a measure for the first-order effect on the model output. However
+the use of mu can be tricky because if the model is non-monotonic
+negative elements can be in the parameter distribution and by taking the
+mean of the variance (= mu!) the netto effect is cancelled out! Should
+always be used together with plotsigma in order to see whether higher
+order effects are occuring, high sigma values with low mu values can 
+be caused by non-monotonicity of functions. In order to check this use
+plotmustar and/or plotmustarsigma</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>width</strong> : float (0-1)</p>
+<blockquote>
+<div><p>width of the bars in the barchart</p>
+</div></blockquote>
+<p><strong>addval</strong> : bool</p>
+<blockquote>
+<div><p>if True, the morris mu values are added to the graph</p>
+</div></blockquote>
+<p><strong>sortit</strong> : bool</p>
+<blockquote>
+<div><p>if True, larger values (in absolute value) are plotted closest to
+the y-axis</p>
+</div></blockquote>
+<p><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>the output to use whe multiple are compared; starts with 0</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote>
+<div><p>passed to the matplotlib.bar</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : matplotlib.figure.Figure object</p>
+<blockquote>
+<div><p>figure containing the output</p>
+</div></blockquote>
+<p><strong>ax1</strong> : axes.AxesSubplot object</p>
+<blockquote class="last">
+<div><p>the subplot</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_morris_mu.png"><img alt="_images/ex_morris_mu.png" src="_images/ex_morris_mu.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.MorrisScreening.plotmustar">
+<code class="descclassname">MorrisScreening.</code><code class="descname">plotmustar</code><span class="sig-paren">(</span><em>width=0.5</em>, <em>addval=True</em>, <em>sortit=True</em>, <em>outputid=0</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.plotmustar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.plotmustar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a barchart of the given mustar</p>
+<p>mu* is a measure for the first-order effect on the model output.
+By taking the average of the absolute values of the parameter
+distribution, the absolute effect on the output can be calculated. This
+is very useful when you are working with non-monotonic functions. The
+drawback is that you lose information about the direction of influence 
+(is this factor influencing the output in a positive or negative way?).
+For the direction of influence use plotmustar!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>width</strong> : float (0-1)</p>
+<blockquote>
+<div><p>width of the bars in the barchart</p>
+</div></blockquote>
+<p><strong>addval</strong> : bool</p>
+<blockquote>
+<div><p>if True, the morris values are added to the graph</p>
+</div></blockquote>
+<p><strong>sortit</strong> : bool</p>
+<blockquote>
+<div><p>if True, larger values (in absolute value) are plotted closest to
+the y-axis</p>
+</div></blockquote>
+<p><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>the output to use whe multiple are compared; starts with 0</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote>
+<div><p>passed to the matplotlib.bar; width is already used</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">fig: matplotlib.figure.Figure object</p>
+<blockquote>
+<div><p>figure containing the output</p>
+</div></blockquote>
+<p>ax1: axes.AxesSubplot object</p>
+<blockquote class="last">
+<div><p>the subplot</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_morris_mustar.png"><img alt="_images/ex_morris_mustar.png" src="_images/ex_morris_mustar.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.MorrisScreening.plotsigma">
+<code class="descclassname">MorrisScreening.</code><code class="descname">plotsigma</code><span class="sig-paren">(</span><em>width=0.5</em>, <em>addval=True</em>, <em>sortit=True</em>, <em>outputid=0</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.plotsigma"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.plotsigma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a barchart of the given sigma</p>
+<p>sigma is a measure for the higher order effects (e.g. curvatures and 
+interactions). High sigma values typically occurs when for example 
+parameters are correlated, the model is non linear,... The sum of all
+these effects is sigma. For linear models without any correlation sigma
+should be approximately zero.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>width</strong> : float (0-1)</p>
+<blockquote>
+<div><p>width of the bars in the barchart</p>
+</div></blockquote>
+<p><strong>addval</strong> : bool</p>
+<blockquote>
+<div><p>if True, the morris values are added to the graph</p>
+</div></blockquote>
+<p><strong>sortit</strong> : bool</p>
+<blockquote>
+<div><p>if True, larger values (in absolute value) are plotted closest to
+the y-axis</p>
+</div></blockquote>
+<p><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>the output to use whe multiple are compared; starts with 0</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote>
+<div><p>passed to the matplotlib.bar</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : matplotlib.figure.Figure object</p>
+<blockquote>
+<div><p>figure containing the output</p>
+</div></blockquote>
+<p><strong>ax1</strong> : axes.AxesSubplot object</p>
+<blockquote class="last">
+<div><p>the subplot</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_morris_sigma.png"><img alt="_images/ex_morris_sigma.png" src="_images/ex_morris_sigma.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.MorrisScreening.plotmustarsigma">
+<code class="descclassname">MorrisScreening.</code><code class="descname">plotmustarsigma</code><span class="sig-paren">(</span><em>outputid=0</em>, <em>zoomperc=0.05</em>, <em>loc=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.plotmustarsigma"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.plotmustarsigma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the mu* vs sigma chart to interpret the combined effect of both.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>zoomperc</strong> : float (0-1)</p>
+<blockquote>
+<div><p>the percentage of the output range to show in the zoomplot,
+if &#8216;none&#8217;, no zoom plot is added</p>
+</div></blockquote>
+<p><strong>loc</strong> : int</p>
+<blockquote>
+<div><p>matplotlib.pyplot.legend: location code (0-10)</p>
+</div></blockquote>
+<p><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>the output to use whe multiple are compared; starts with 0</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : matplotlib.figure.Figure object</p>
+<blockquote>
+<div><p>figure containing the output</p>
+</div></blockquote>
+<p><strong>ax1</strong> : axes.AxesSubplot object</p>
+<blockquote>
+<div><p>the subplot</p>
+</div></blockquote>
+<p><strong>txtobjects</strong> : list of textobjects</p>
+<blockquote class="last">
+<div><p>enbales the ad hoc replacement of labels when overlapping</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Visualization as proposed by <a class="reference internal" href="#m2" id="id8">[M2]</a></p>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_plotmustarsigma.png"><img alt="_images/ex_plotmustarsigma.png" src="_images/ex_plotmustarsigma.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.MorrisScreening.latexresults">
+<code class="descclassname">MorrisScreening.</code><code class="descname">latexresults</code><span class="sig-paren">(</span><em>outputid=0</em>, <em>name='Morristable.tex'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.latexresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.latexresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print Results in a &#8220;deluxetable&#8221; Latex</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>teh output to use when evaluation for multiple outputs are calculated</p>
+</div></blockquote>
+<p><strong>name</strong> : str.tex</p>
+<blockquote class="last">
+<div><p>output file name; use .tex extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>\begin{table}{lccc}
+\tablewidth{0pc}
+\tablecolumns{4}
+\caption{Morris evaluation criteria\label{tab:morris1tot}}
+\tablehead{
+  &amp; $\mu$ &amp; $\mu^*$ &amp; $\sigma$  }
+\startdata
+$X_1$ &amp; 0.019 &amp; 0.053 &amp; 0.062\\
+$X_2$ &amp; -0.014 &amp; 0.28 &amp; 0.37\\
+$X_3$ &amp; 0.35 &amp; 1.8 &amp; 2.2\\
+$X_4$ &amp; 0.58 &amp; 0.77 &amp; 0.66\\
+$X_5$ &amp; -0.0091 &amp; 0.029 &amp; 0.035\\
+$X_6$ &amp; 0.023 &amp; 0.088 &amp; 0.11\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pystran.MorrisScreening.txtresults">
+<code class="descclassname">MorrisScreening.</code><code class="descname">txtresults</code><span class="sig-paren">(</span><em>outputid=0</em>, <em>name='Morrisresults.txt'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_morris.html#MorrisScreening.txtresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.MorrisScreening.txtresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Results in txt file to load in eg excel</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>the output to use when evaluation for multiple outputs are calculated</p>
+</div></blockquote>
+<p><strong>name</strong> : str.txt</p>
+<blockquote class="last">
+<div><p>output file name; use .txt extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>Par      mu      mustar          sigma
+$X_1$    0.01923737       0.05295802      0.06235872
+$X_2$    -0.01423402      0.27864841      0.36502709
+$X_3$    0.35127671       1.79863549      2.19419533
+$X_4$    0.57758340       0.76929478      0.66397173
+$X_5$    -0.00912314      0.02933937      0.03503700
+$X_6$    0.02319802       0.08834758      0.10503778
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="standardized-regression-coefficients-src-method">
+<h2>Standardized Regression Coefficients (SRC) method<a class="headerlink" href="#standardized-regression-coefficients-src-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-src-methods">
+<h3>Main SRC methods<a class="headerlink" href="#main-src-methods" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pystran.SRCSensitivity">
+<em class="property">class </em><code class="descclassname">pystran.</code><code class="descname">SRCSensitivity</code><span class="sig-paren">(</span><em>parsin</em>, <em>ModelType='external'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>The regression sensitivity analysis:
+MC based sampling in combination with a SRC calculation; the rank based
+approach (less dependent on linearity) is also included in the SRC 
+calculation and is called SRRC</p>
+<p>The model is proximated by a linear model of the same parameterspace and the
+influences of the parameters on the model output is evaluated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>parsin</strong> : list</p>
+<blockquote class="last">
+<div><p>Either a list of (min,max,&#8217;name&#8217;) values, 
+[(min,max,&#8217;name&#8217;),(min,max,&#8217;name&#8217;),...(min,max,&#8217;name&#8217;)]
+or a list of ModPar instances</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<dl class="docutils">
+<dt>Rank transformation: </dt>
+<dd>Rank transformation of the data can be used to transform a nonlinear 
+but monotonic relationship to a linear relationship. When using rank 
+transformation the data is replaced with their corresponding ranks.
+Ranks are defined by assigning 1 to the smallest value,
+2 to the second smallest and so-on, until the largest
+value has been assigned the rank N.</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ai</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">15</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">7</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xi</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">8.0</span><span class="p">,</span><span class="mf">9.0</span><span class="p">,</span><span class="s1">r&#39;$X_1$&#39;</span><span class="p">),(</span><span class="mf">7.0</span><span class="p">,</span><span class="mf">10.0</span><span class="p">,</span><span class="s1">r&#39;$X_2$&#39;</span><span class="p">),(</span><span class="mf">6.0</span><span class="p">,</span><span class="mf">11.0</span><span class="p">,</span><span class="s1">r&#39;$X_3$&#39;</span><span class="p">),</span>
+<span class="gp">&gt;&gt;&gt; </span>      <span class="p">(</span><span class="mf">5.0</span><span class="p">,</span><span class="mf">12.0</span><span class="p">,</span><span class="s1">r&#39;$X_4$&#39;</span><span class="p">),</span> <span class="p">(</span><span class="mf">4.0</span><span class="p">,</span><span class="mf">13.0</span><span class="p">,</span><span class="s1">r&#39;$X_5$&#39;</span><span class="p">),(</span><span class="mf">3.0</span><span class="p">,</span><span class="mf">4.</span><span class="p">,</span><span class="s1">r&#39;$X_6$&#39;</span><span class="p">)]</span>      
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#prepare method</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">=</span><span class="n">SRCSensitivity</span><span class="p">(</span><span class="n">Xi</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#prepare parameter samples</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">PrepareSample</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#run model and get outputs for all MC samples</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">reg</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">simplelinear</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span><span class="n">reg</span><span class="o">.</span><span class="n">parset2run</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#Calc SRC without using rank-based approach</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">Calc_SRC</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">rankbased</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#check if the sum of the squared values approaches 1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">reg</span><span class="o">.</span><span class="n">sumcheck</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span> <span class="mf">1.00555193</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">plot_tornado</span><span class="p">(</span><span class="n">outputid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="3%" />
+<col width="97%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>_ndim</td>
+<td>( intx) number of factors examined. In case the groups are chosen the number of factors is stores in NumFact and sizea becomes the number of created groups, (k)</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pystran.SRCSensitivity.Calc_SRC">
+<code class="descname">Calc_SRC</code><span class="sig-paren">(</span><em>output</em>, <em>rankbased=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity.Calc_SRC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity.Calc_SRC" title="Permalink to this definition">¶</a></dt>
+<dd><p>SRC sensitivity calculation for multiple outputs</p>
+<p>Check is done on the Rsq value (higher than 0.7?) and the sum of SRC&#8217;s
+for the usefulness of the method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output</strong> : Nxm ndarray</p>
+<blockquote>
+<div><p>array with the model outputs (N MC simulations and m different 
+outputs)</p>
+</div></blockquote>
+<p><strong>rankbased</strong> : boolean</p>
+<blockquote class="last">
+<div><p>if True, SRC values are transformed into SRRC values; using ranks 
+instead of values itself</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Least squares Estimation theory, 
+eg. <a class="reference external" href="http://www.stat.math.ethz.ch/~geer/bsa199_o.pdf">http://www.stat.math.ethz.ch/~geer/bsa199_o.pdf</a></p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="12%" />
+<col width="88%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>SRC</td>
+<td>(ndimxnoutputs narray) Standardized Regression Coefficients</td>
+</tr>
+<tr class="row-even"><td>cova :</td>
+<td>variance-Covariance matrix</td>
+</tr>
+<tr class="row-odd"><td>core :</td>
+<td>correlation matrix</td>
+</tr>
+<tr class="row-even"><td>sumcheck</td>
+<td>(noutput narray) chek for linearity by summing the SRC values</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.SRCSensitivity.PrepareSample">
+<code class="descname">PrepareSample</code><span class="sig-paren">(</span><em>nbaseruns</em>, <em>samplemethod='Sobol'</em>, <em>seedin=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity.PrepareSample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity.PrepareSample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sampling of the parameter space. No specific sampling preprocessing
+procedure is needed, only a general Monte Carlo sampling of the 
+parameter space is expected. To improve the sampling procedure, 
+Latin Hypercube or Sobol pseudo-random sampling can be preferred. The 
+latter is used in the pySTAN framework, but using the ModPar class
+individually enables Latin Hypercube and random sampling.</p>
+<p>Currently only uniform distributions are supported by the framework,
+but the Modpar class enables other dsitributions to sample the 
+parameter space and bypassing the sampling here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int</p>
+<blockquote>
+<div><p>number of samples to take for the analysis; highly dependent from
+the total number of input factors. range of 10000s is minimum.</p>
+</div></blockquote>
+<p><strong>samplemethod</strong> : &#8216;sobol&#8217; or &#8216;lh&#8217;</p>
+<blockquote>
+<div><p>sampling method to use for the sampling</p>
+</div></blockquote>
+<p><strong>seedin</strong> : int</p>
+<blockquote>
+<div><p>seed to start the Sobol sampling from. This enables to increase
+the sampling later on, by starting from the previous seedout.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>seed_out</strong> : int</p>
+<blockquote>
+<div><p>the last seed, useful for later use</p>
+</div></blockquote>
+<p><strong>parset2run</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>parameters to run the model (nbaseruns x ndim)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>Do the Sobol sampling always for the entire parameter space at the</li>
+</ul>
+<p>same time, for LH this doesn&#8217;t matter!
+- Never extend the sampling size with using the same seed, since this
+generates duplicates of the samples!</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="quick-analysis-of-the-scatter-plots-of-the-ouput-versus-the-parameter-values">
+<h3>Quick analysis of the scatter plots of the ouput versus the parameter values<a class="headerlink" href="#quick-analysis-of-the-scatter-plots-of-the-ouput-versus-the-parameter-values" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="pystran.SRCSensitivity.quickscatter">
+<code class="descclassname">SRCSensitivity.</code><code class="descname">quickscatter</code><span class="sig-paren">(</span><em>output</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity.quickscatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity.quickscatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quick link to the general scatter function, by passing to the general
+scattercheck plot of the sensitivity base-class</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output: ndimx1 array</strong></p>
+<blockquote class="last">
+<div><p>array with the output for one output of the model;
+this can be an Objective function or an other model statistic</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Used to check linearity of the input/output relation in order to evaluate
+the usefulness of the SRC-regression based technique</p>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">quickscatter</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<p>Output image:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_scatter.png"><img alt="_images/ex_SRC_scatter.png" src="_images/ex_SRC_scatter.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div></blockquote>
+</div>
+<div class="section" id="id9">
+<h3>Output plots and exports<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="pystran.SRCSensitivity.plot_tornado">
+<code class="descclassname">SRCSensitivity.</code><code class="descname">plot_tornado</code><span class="sig-paren">(</span><em>outputid=0</em>, <em>SRC=True</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity.plot_tornado"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity.plot_tornado" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a Tornadplot of the parameter influence on the output;
+SRC must be calculated first before plotting</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>output for which the tornado plot is made, starting from 0</p>
+</div></blockquote>
+<p><strong>SRC</strong> : boolean</p>
+<blockquote>
+<div><p>SRC true means that SRC values are used, otherwise 
+the SRRC (ranked!) is used</p>
+</div></blockquote>
+<p><strong>*args, **kwargs :</strong></p>
+<blockquote class="last">
+<div><p>arguments passed to the TornadoSensPlot function of the 
+plotfunctions_rev data</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<dl class="docutils">
+<dt>The parameters for the tornadosensplot are:</dt>
+<dd>gridbins: int, number of gridlines
+midwidth: float, width between the two axis, adapt to parameter names
+setequal: boolean, if True, axis are equal lengths
+plotnumb: boolean, if True, sensitiviteis are plotted
+parfontsize: int, font size of the parameter names
+bandwidth: width of the band</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">plot_tornado</span><span class="p">(</span><span class="n">outputid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="n">gridbins</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">midwidth</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> 
+<span class="go">                     setequal=True, plotnumb=True, parfontsize=12, </span>
+<span class="go">                     bandwidth=0.75)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<p>Output image:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_tornado.png"><img alt="_images/ex_SRC_tornado.png" src="_images/ex_SRC_tornado.png" style="width: 500.0px; height: 300.0px;" /></a>
+</div></blockquote>
+<dl class="method">
+<dt id="pystran.SRCSensitivity.plot_SRC">
+<code class="descclassname">SRCSensitivity.</code><code class="descname">plot_SRC</code><span class="sig-paren">(</span><em>width=0.2</em>, <em>addval=True</em>, <em>sortit=True</em>, <em>outputid='all'</em>, <em>ncols=3</em>, <em>outputnames=[]</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity.plot_SRC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity.plot_SRC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a barchart of the SRC values; actually a Tornadoplot in the 
+horizontal direction. More in the style of the other methods.</p>
+<p>TODO: make for subset of outputs, also in other methods; currently all or 1</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>width</strong> : float (0-1)</p>
+<blockquote>
+<div><p>width of the bars in the barchart</p>
+</div></blockquote>
+<p><strong>addval</strong> : bool</p>
+<blockquote>
+<div><p>if True, the sensitivity values are added to the graph</p>
+</div></blockquote>
+<p><strong>sortit</strong> : bool</p>
+<blockquote>
+<div><p>if True, larger values (in absolute value) are plotted closest to
+the y-axis</p>
+</div></blockquote>
+<p><strong>outputid</strong> : int or all</p>
+<blockquote>
+<div><p>the output to use whe multiple are compared; starts with 0
+if all, the different outputs are plotted in subplots</p>
+</div></blockquote>
+<p><strong>ncols</strong> : int</p>
+<blockquote>
+<div><p>number of columns to put the subplots in</p>
+</div></blockquote>
+<p><strong>outputnames</strong> :  list of strings</p>
+<blockquote>
+<div><p>[] to plot no outputnames, otherwise list of strings equal to the
+number of outputs</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote>
+<div><p>passed to the matplotlib.bar</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : matplotlib.figure.Figure object</p>
+<blockquote>
+<div><p>figure containing the output</p>
+</div></blockquote>
+<p><strong>ax1</strong> : axes.AxesSubplot object</p>
+<blockquote class="last">
+<div><p>the subplot</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#plot single SRC</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">plot_SRC</span><span class="p">(</span><span class="n">outputid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> 
+<span class="go">                 ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#plot single SRC (assume 4 outputs)      </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reg</span><span class="o">.</span><span class="n">plot_SRC</span><span class="p">(</span><span class="n">outputid</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span> <span class="p">,</span> <span class="n">ncols</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> 
+<span class="go">                  outputnames=[&#39;o1&#39;,&#39;o2&#39;,&#39;o3&#39;,&#39;o4&#39;], ec=&#39;grey&#39;, fc=&#39;grey&#39;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<p>Output image if a single output is selected:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_single.png"><img alt="_images/ex_SRC_single.png" src="_images/ex_SRC_single.png" style="width: 400.0px; height: 300.0px;" /></a>
+</div></blockquote>
+<p>Output image if a all outputs are selected:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_all.png"><img alt="_images/ex_SRC_all.png" src="_images/ex_SRC_all.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div></blockquote>
+<dl class="method">
+<dt id="pystran.SRCSensitivity.latexresults">
+<code class="descclassname">SRCSensitivity.</code><code class="descname">latexresults</code><span class="sig-paren">(</span><em>outputnames</em>, <em>rank=False</em>, <em>name='SRCtable.tex'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity.latexresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity.latexresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print results SRC values or ranks in a &#8220;deluxetable&#8221; Latex</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputnames</strong> : list of strings</p>
+<blockquote>
+<div><p>The names of the outputs in the colomns</p>
+</div></blockquote>
+<p><strong>rank</strong> : boolean</p>
+<blockquote>
+<div><p>if rank is True, rankings or plotted in tabel instead of the 
+SRC values</p>
+</div></blockquote>
+<p><strong>name</strong> : str.tex</p>
+<blockquote class="last">
+<div><p>output file name; use .tex extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>\begin{table}{lccccc}
+\tablewidth{0pc}
+\tablecolumns{6}
+\caption{Global SRC parameter ranking\label{tab:SRCresult}}
+\tablehead{
+ &amp; o1 &amp; o2 &amp; o3 &amp; o4 &amp; o5  }
+\startdata
+$X_1$ &amp; 5 &amp; 5 &amp; 5 &amp; 5 &amp; 5\\
+$X_2$ &amp; 4 &amp; 4 &amp; 4 &amp; 4 &amp; 4\\
+$X_3$ &amp; 3 &amp; 3 &amp; 3 &amp; 3 &amp; 3\\
+$X_4$ &amp; 2 &amp; 2 &amp; 2 &amp; 2 &amp; 2\\
+$X_5$ &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1\\
+$X_6$ &amp; 6 &amp; 6 &amp; 6 &amp; 6 &amp; 6\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pystran.SRCSensitivity.txtresults">
+<code class="descclassname">SRCSensitivity.</code><code class="descname">txtresults</code><span class="sig-paren">(</span><em>outputnames</em>, <em>rank=False</em>, <em>name='SRCresults.txt'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_regression.html#SRCSensitivity.txtresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SRCSensitivity.txtresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Results rankmatrix in txt file to load in eg excel</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputnames</strong> : list of strings</p>
+<blockquote>
+<div><p>The names of the outputs in the colomns</p>
+</div></blockquote>
+<p><strong>rank</strong> : boolean</p>
+<blockquote>
+<div><p>if rank is True, rankings or plotted in tabel instead of the 
+SRC values</p>
+</div></blockquote>
+<p><strong>name</strong> : str.txt</p>
+<blockquote class="last">
+<div><p>output file name; use .txt extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>Par      o1      o2      o3      o4      o5
+$X_1$    0.0778505546741         0.0778505546741         0.0778505546741         0.0778505546741         0.0778505546741
+$X_2$    0.233670804823  0.233670804823  0.233670804823  0.233670804823  0.233670804823
+$X_3$    -0.6    0.389115599046  0.389115599046  0.389115599046  0.389115599046
+$X_4$    0.544743494911  0.544743494911  0.544743494911  0.544743494911  0.544743494911
+$X_5$    0.700482475678  0.700482475678  0.700482475678  0.700482475678  0.700482475678
+$X_6$    0.0778270555871         0.0778270555871         0.0778270555871         0.0778270555871         0.0778270555871
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="sobol-variance-based-method">
+<h2>Sobol Variance based method<a class="headerlink" href="#sobol-variance-based-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-sobol-variance-methods">
+<h3>Main Sobol variance methods<a class="headerlink" href="#main-sobol-variance-methods" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pystran.SobolVariance">
+<em class="property">class </em><code class="descclassname">pystran.</code><code class="descname">SobolVariance</code><span class="sig-paren">(</span><em>parsin</em>, <em>ModelType='pyFUSE'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sobol Sensitivity Analysis Variance Based</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>ParsIn</strong> : list</p>
+<blockquote>
+<div><p>either a list of (min,max,&#8217;name&#8217;) values, 
+[(min,max,&#8217;name&#8217;),(min,max,&#8217;name&#8217;),...(min,max,&#8217;name&#8217;)]
+or a list of ModPar instances</p>
+</div></blockquote>
+<p><strong>ModelType</strong> : pyFUSE | PCRaster | external</p>
+<blockquote class="last">
+<div><p>Give the type of model working with</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Calculates first and total order, and second order Total Sensitivity, 
+according to <a class="reference internal" href="#s1" id="id10">[S1]</a> , higher order terms and bootstrapping is not (yet) included</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="s1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[S1]</td><td><em>(<a class="fn-backref" href="#id10">1</a>, <a class="fn-backref" href="#id11">2</a>, <a class="fn-backref" href="#id13">3</a>, <a class="fn-backref" href="#id15">4</a>)</em> Saltelli, A., P. Annoni, I. Azzini, F. Campolongo, M. Ratto, 
+S. Tarantola,(2010) Variance based sensitivity analysis of model output. 
+Design and estimator for the total sensitivity index, Computer Physics 
+Communications, 181, 259–270</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="s2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[S2]</td><td><em>(<a class="fn-backref" href="#id12">1</a>, <a class="fn-backref" href="#id14">2</a>)</em> Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo, 
+Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano Tarantola. 
+Global Sensitivity Analysis, The Primer. John Wiley &amp; Sons Ltd, 2008.</td></tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ai</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">99</span><span class="p">,</span> <span class="mi">99</span><span class="p">,</span> <span class="mi">99</span><span class="p">,</span> <span class="mi">99</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alphai</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xi</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">&#39;par1&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">&#39;par2&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">&#39;par3&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">&#39;par4&#39;</span><span class="p">),</span>
+<span class="go">      (0.0,1.0,&#39;par5&#39;),(0.0,1.0,&#39;par6&#39;),(0.0,1.0,&#39;par7&#39;),(0.0,1.0,&#39;par8&#39;),]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">di</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#set up sensitivity analysis</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span> <span class="o">=</span> <span class="n">SobolVariance</span><span class="p">(</span><span class="n">Xi</span><span class="p">,</span> <span class="n">ModelType</span> <span class="o">=</span> <span class="s1">&#39;testmodel&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#Sampling strategy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span><span class="o">.</span><span class="n">SobolVariancePre</span><span class="p">(</span><span class="mi">1500</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#Run model + evaluate the output</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span><span class="o">.</span><span class="n">runTestModel</span><span class="p">(</span><span class="s1">&#39;analgfunc&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">ai</span><span class="p">,</span> <span class="n">alphai</span><span class="p">,</span> <span class="n">di</span><span class="p">])</span> <span class="c1">#here normally other model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#results in txt file </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span><span class="o">.</span><span class="n">txtresults</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;SobolTestOut.txt&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#results in tex-table </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span><span class="o">.</span><span class="n">latexresults</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;SobolTestOut.tex&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#Plots</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span><span class="o">.</span><span class="n">plotSi</span><span class="p">(</span><span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span><span class="o">.</span><span class="n">plotSTi</span><span class="p">(</span><span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sens2</span><span class="o">.</span><span class="n">plotSTij</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Si_evol</span><span class="p">,</span> <span class="n">STi_evol</span> <span class="o">=</span> <span class="n">sens2</span><span class="o">.</span><span class="n">sens_evolution</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>    
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="7%" />
+<col width="93%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>parset2run</td>
+<td>(ndarray) every row is a parameter set to run the model for. All sensitivity methods have this attribute to interact with base-class running</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pystran.SobolVariance.SobolVariancePost">
+<code class="descname">SobolVariancePost</code><span class="sig-paren">(</span><em>output</em>, <em>repl=1</em>, <em>adaptedbaserun=None</em>, <em>forevol=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.SobolVariancePost"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.SobolVariancePost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate first and total indices based on model output and sampled
+values</p>
+<p>the sensmatrices for replica, 
+have repititions in the rows, columns are the factors</p>
+<p>only output =&gt; make multiple outputs (todo!!),
+by using the return, different outputs can be tested...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output</strong> : ndarray</p>
+<blockquote>
+<div><p>Nx1 matrix with the model outputs</p>
+</div></blockquote>
+<p><strong>repl</strong> :  int</p>
+<blockquote>
+<div><p>number of replicates used</p>
+</div></blockquote>
+<p><strong>adaptedbaserun</strong> : int</p>
+<blockquote>
+<div><p>number of baseruns to base calculations on</p>
+</div></blockquote>
+<p><strong>forevol</strong> : boolean</p>
+<blockquote class="last">
+<div><p>True if used for evaluating the evolution</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The calculation methods follows as the directions given in <a class="reference internal" href="#s1" id="id11">[S1]</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.SobolVariance.SobolVariancePre">
+<code class="descname">SobolVariancePre</code><span class="sig-paren">(</span><em>nbaseruns</em>, <em>seed=1</em>, <em>repl=1</em>, <em>conditional=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.SobolVariancePre"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.SobolVariancePre" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up the sampling procedure of N*(k+2) samples</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int</p>
+<blockquote>
+<div><p>number of samples for the basic analysis, total number of model runs
+is Nmc(k+2), with k the number of factors</p>
+</div></blockquote>
+<p><strong>seed</strong> : int</p>
+<blockquote>
+<div><p>to set the seed point for the sobol sampling; enables to 
+enlarge a current sample</p>
+</div></blockquote>
+<p><strong>repl</strong> : int</p>
+<blockquote class="last">
+<div><p>Replicates the entire sampling procedure. Can be usefull to test if the
+current sampling size is large enough to get convergence in the 
+sensitivity results (bootstrapping is currently not included)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Following the Global sensitivity analysis, <a class="reference internal" href="#s2" id="id12">[S2]</a>, 
+but updated for <a class="reference internal" href="#s1" id="id13">[S1]</a> for more optimal convergence of the sensitivity
+indices</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.SobolVariance.Sobolsampling">
+<code class="descname">Sobolsampling</code><span class="sig-paren">(</span><em>nbaseruns</em>, <em>seedin=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.Sobolsampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.Sobolsampling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs Sobol sampling procedure, given a set of ModPar instances, 
+or by a set of (min,max) values in a list.</p>
+<p>This function is mainly used as help function, but can be used to 
+perform Sobol sampling for other purposes</p>
+<p>Todo: improve seed handling, cfr. bioinspyred package</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int</p>
+<blockquote>
+<div><p>number of runs to do</p>
+</div></blockquote>
+<p><strong>seed</strong> : int</p>
+<blockquote class="last">
+<div><p>to et the seed point for the sobol sampling</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>DO SOBOL SAMPLING ALWAYS FOR ALL PARAMETERS AT THE SAME TIME!</p>
+<p>Duplicates the entire parameter set to be able to divide in A and B
+matric</p>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">p1</span> <span class="o">=</span> <span class="n">ModPar</span><span class="p">(</span><span class="s1">&#39;tp1&#39;</span><span class="p">,</span><span class="mf">2.0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="mf">3.0</span><span class="p">,</span><span class="s1">&#39;randomUniform&#39;</span><span class="p">)</span>    
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p2</span> <span class="o">=</span> <span class="n">ModPar</span><span class="p">(</span><span class="s1">&#39;tp2&#39;</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">5.0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="s1">&#39;randomUniform&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p3</span> <span class="o">=</span> <span class="n">ModPar</span><span class="p">(</span><span class="s1">&#39;tp3&#39;</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">0.1</span><span class="p">,</span><span class="s1">&#39;randomUniform&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sobanal1</span> <span class="o">=</span> <span class="n">SobolVariance</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">p3</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sobanal2</span> <span class="o">=</span> <span class="n">SobolVariance</span><span class="p">([(</span><span class="mf">2.0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">,</span><span class="s1">&#39;tp1&#39;</span><span class="p">),(</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">5.0</span><span class="p">,</span><span class="s1">&#39;tp2&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">&#39;tp3&#39;</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pars1</span> <span class="o">=</span> <span class="n">sobanal</span><span class="o">.</span><span class="n">Sobolsampling</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pars2</span> <span class="o">=</span> <span class="n">sobanal</span><span class="o">.</span><span class="n">Sobolsampling</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.SobolVariance.runTestModel">
+<code class="descname">runTestModel</code><span class="sig-paren">(</span><em>model</em>, <em>inputsmod</em>, <em>repl=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.runTestModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.runTestModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a testmodel</p>
+<p>Use a testmodel to get familiar with the method and try things out. The
+implemented methods are
+* G Sobol function: testfunction with analytical solution 
+* gstarfunction: testfunction with analytical solution,
+extended version of the G sobol function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>model</strong> : string</p>
+<blockquote>
+<div><p>name fo the testmodel</p>
+</div></blockquote>
+<p><strong>inputsmod</strong> : list</p>
+<blockquote>
+<div><p>list with all the inputs of the model, except of the sampled stuff</p>
+</div></blockquote>
+<p class="last"><strong>repl</strong> : int</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<dl class="docutils">
+<dt>More information on both testfunctions can be found in:</dt>
+<dd><ul class="first last simple">
+<li>G Sobol function <a class="reference internal" href="#s2" id="id14">[S2]</a></li>
+<li>G* function <a class="reference internal" href="#s1" id="id15">[S1]</a></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="check-the-convergence-of-the-analysis">
+<h3>Check the convergence of the analysis<a class="headerlink" href="#check-the-convergence-of-the-analysis" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="pystran.SobolVariance.sens_evolution">
+<code class="descclassname">SobolVariance.</code><code class="descname">sens_evolution</code><span class="sig-paren">(</span><em>output=None</em>, <em>repl=1</em>, <em>labell=-0.07</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.sens_evolution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.sens_evolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the convergence of the current sequence</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output</strong> : optional</p>
+<blockquote>
+<div><p>if True; this output is used, elsewhere the generated output</p>
+</div></blockquote>
+<p><strong>repl</strong> : int</p>
+<blockquote>
+<div><p>must be 1 to work</p>
+</div></blockquote>
+<p><strong>labell</strong> : float</p>
+<blockquote>
+<div><p>aligns the ylabels</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote>
+<div><p>passed to the matplotlib.plot function</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Si_evol</strong> : ndarray</p>
+<blockquote>
+<div><p>Si of the factors in number of nbaseruns</p>
+</div></blockquote>
+<p><strong>STi_evol</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>STi of the factors in number of nbaseruns</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_sobol_evSi.png"><img alt="_images/ex_sobol_evSi.png" src="_images/ex_sobol_evSi.png" style="width: 700.0px; height: 405.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_sobol_evSTi.png"><img alt="_images/ex_sobol_evSTi.png" src="_images/ex_sobol_evSTi.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div>
+<div class="section" id="id16">
+<h3>Output plots and exports<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="pystran.SobolVariance.plotSTij">
+<code class="descclassname">SobolVariance.</code><code class="descname">plotSTij</code><span class="sig-paren">(</span><em>linewidth=2.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.plotSTij"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.plotSTij" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the STij interactive terms</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>linewidth</strong> : float</p>
+<blockquote class="last">
+<div><p>width of the black lines of the grid</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_sobol_STij.png"><img alt="_images/ex_sobol_STij.png" src="_images/ex_sobol_STij.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.SobolVariance.plotSTi">
+<code class="descclassname">SobolVariance.</code><code class="descname">plotSTi</code><span class="sig-paren">(</span><em>width=0.5</em>, <em>addval=True</em>, <em>sortit=True</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.plotSTi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.plotSTi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a barchart of the given STi</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>width</strong> : float (0-1)</p>
+<blockquote>
+<div><p>width of the bars in the barchart</p>
+</div></blockquote>
+<p><strong>addval</strong> : bool</p>
+<blockquote>
+<div><p>if True, the morris mu values are added to the graph</p>
+</div></blockquote>
+<p><strong>sortit</strong> : bool</p>
+<blockquote>
+<div><p>if True, larger values (in absolute value) are plotted closest to
+the y-axis</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote class="last">
+<div><p>passed to the matplotlib.bar</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_sobol_STi.png"><img alt="_images/ex_sobol_STi.png" src="_images/ex_sobol_STi.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.SobolVariance.plotSi">
+<code class="descclassname">SobolVariance.</code><code class="descname">plotSi</code><span class="sig-paren">(</span><em>width=0.5</em>, <em>addval=True</em>, <em>sortit=True</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.plotSi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.plotSi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a barchart of the given Si</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>width</strong> : float (0-1)</p>
+<blockquote>
+<div><p>width of the bars in the barchart</p>
+</div></blockquote>
+<p><strong>addval</strong> : bool</p>
+<blockquote>
+<div><p>if True, the morris mu values are added to the graph</p>
+</div></blockquote>
+<p><strong>sortit</strong> : bool</p>
+<blockquote>
+<div><p>if True, larger values (in absolute value) are plotted closest to
+the y-axis</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote class="last">
+<div><p>passed to the matplotlib.bar</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_sobol_Si.png"><img alt="_images/ex_sobol_Si.png" src="_images/ex_sobol_Si.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.SobolVariance.latexresults">
+<code class="descclassname">SobolVariance.</code><code class="descname">latexresults</code><span class="sig-paren">(</span><em>name='Soboltable.tex'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.latexresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.latexresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print Results in a &#8220;deluxetable&#8221; Latex</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : str.tex</p>
+<blockquote class="last">
+<div><p>output file name; use .tex extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>\begin{table}{lcc}
+\tablewidth{0pc}
+\tablecolumns{3}
+\caption{First order and Total sensitivity index\label{tab:sobol1tot}}
+\tablehead{
+  &amp; $S_i$ &amp; $S_{Ti}$  }
+\startdata
+par1 &amp; 0.72 &amp; 0.79\\
+par2 &amp; 0.18 &amp; 0.24\\
+par3 &amp; 0.023 &amp; 0.034\\
+par4 &amp; 0.0072 &amp; 0.010\\
+par5 &amp; 0.000044 &amp; 0.00011\\
+par6 &amp; 0.000068 &amp; 0.00011\\
+par7 &amp; 0.000028 &amp; 0.00010\\
+par8 &amp; 0.000049 &amp; 0.00011\\
+SUM &amp; 0.93 &amp; 1.1\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pystran.SobolVariance.txtresults">
+<code class="descclassname">SobolVariance.</code><code class="descname">txtresults</code><span class="sig-paren">(</span><em>name='Sobolresults.txt'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_sobol.html#SobolVariance.txtresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.SobolVariance.txtresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Results in txt file to load in eg excel</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>name</strong> : str.txt</p>
+<blockquote class="last">
+<div><p>output file name; use .txt extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>Par      Si      STi
+par1     0.71602494       0.78797717
+par2     0.17916175       0.24331297
+par3     0.02346677       0.03437614
+par4     0.00720168       0.01044238
+par5     0.00004373       0.00010526
+par6     0.00006803       0.00010556
+par7     0.00002847       0.00010479
+par8     0.00004918       0.00010522
+SUM      0.92604455       1.07652948
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="latin-hypercube-oat-method">
+<h2>Latin-Hypercube OAT method<a class="headerlink" href="#latin-hypercube-oat-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-global-oat-methods">
+<h3>Main GLobal OAT methods<a class="headerlink" href="#main-global-oat-methods" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pystran.GlobalOATSensitivity">
+<em class="property">class </em><code class="descclassname">pystran.</code><code class="descname">GlobalOATSensitivity</code><span class="sig-paren">(</span><em>parsin</em>, <em>ModelType='external'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>A merged apporach of sensitivity analysis;
+also extended version of the LH-OAT approach</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>parsin</strong> : list</p>
+<blockquote class="last">
+<div><p>either a list of (min,max,&#8217;name&#8217;) values, 
+[(min,max,&#8217;name&#8217;),(min,max,&#8217;name&#8217;),...(min,max,&#8217;name&#8217;)]
+or a list of ModPar instances</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Original method described in <a class="reference internal" href="#oat1" id="id17">[OAT1]</a>, but here generalised in the framework,
+by adding different measures of sensitivity making the sampling method
+adjustable (lh or Sobol pseudosampling) and adding the choice of 
+numerical approach to derive the derivative.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="oat1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[OAT1]</td><td><em>(<a class="fn-backref" href="#id17">1</a>, <a class="fn-backref" href="#id18">2</a>)</em> van Griensven, Ann, T. Meixner, S. Grunwald, T. Bishop, 
+M. Diluzio, and R. Srinivasan. &#8216;A Global Sensitivity Analysis Tool 
+for the Parameters of Multi-variable Catchment Models&#8217; 324 (2006): 10–23.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="oat2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[OAT2]</td><td><em>(<a class="fn-backref" href="#id19">1</a>, <a class="fn-backref" href="#id20">2</a>)</em> Pauw, Dirk D E, D E Leenheer Decaan, and V A N Langenhove 
+Promotor. OPTIMAL EXPERIMENTAL DESIGN FOR CALIBRATION OF BIOPROCESS 
+MODELS : A VALIDATED SOFTWARE TOOLBOX OPTIMAAL EXPERIMENTEEL ONTWERP 
+VOOR KALIBRERING VAN BIOPROCESMODELLEN : EEN GEVALIDEERDE SOFTWARE 
+TOOLBOX BIOPROCESS MODELS : A VALIDATED SOFTWARE TOOLBOX, 2005.</td></tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#EXAMPLE WITH ANALG-FUNCTION</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#variables and parameters</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ai</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">78</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">97</span><span class="p">,</span> <span class="mi">33</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Xi</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">r&#39;$X_1$&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">r&#39;$X_2$&#39;</span><span class="p">),(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="s1">r&#39;$X_3$&#39;</span><span class="p">),</span>
+<span class="go">          (0.0,1.0,r&#39;$X_4$&#39;), (0.0,1.0,r&#39;$X_5$&#39;),(0.,1,r&#39;$X_6$&#39;)]    </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#prepare model class</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">goat</span><span class="o">=</span><span class="n">GlobalOATSensitivity</span><span class="p">(</span><span class="n">Xi</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#prepare the parameter sample</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">goat</span><span class="o">.</span><span class="n">PrepareSample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mf">0.01</span><span class="p">,</span> 
+<span class="go">                       samplemethod=&#39;lh&#39;, </span>
+<span class="go">                       numerical_approach=&#39;central&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#calculate model outputs                   </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">goat</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">goat</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+<span class="go">        output[i,:] = analgfunc(ai,goat.parset2run[i,:])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#evaluate sensitivitu</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">goat</span><span class="o">.</span><span class="n">Calc_sensitivity</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#transform sensitivity into ranking</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">goat</span><span class="o">.</span><span class="n">Get_ranking</span><span class="p">()</span> 
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#plot the partial effect based sensitivity</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">goat</span><span class="o">.</span><span class="n">plotsens</span><span class="p">(</span><span class="n">indice</span><span class="o">=</span><span class="s1">&#39;PE&#39;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#plot the rankmatrix</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">goat</span><span class="o">.</span><span class="n">plot_rankmatrix</span><span class="p">(</span><span class="n">outputnames</span><span class="p">)</span>              
+</pre></div>
+</div>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="3%" />
+<col width="97%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>_ndim</td>
+<td>( intx) number of factors examined. In case the groups are chosen the number of factors is stores in NumFact and sizea becomes the number of created groups, (k)</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pystran.GlobalOATSensitivity.Calc_sensitivity">
+<code class="descname">Calc_sensitivity</code><span class="sig-paren">(</span><em>output</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity.Calc_sensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity.Calc_sensitivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Central or Single Absolute Sensitvity (CAS),
+the Central or Single Total Sensitivity (CTRS) and the Partial Effect
+(PE) of the different outputs given. These outputs can be either
+a set of model objective functions or a timerserie output</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>output: Nxndim array</strong></p>
+<blockquote class="last">
+<div><p>array with the outputs for the different outputs of the model;
+this can be an Objective function, or a timeserie of the model output</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>PE is described in <a class="reference internal" href="#oat1" id="id18">[OAT1]</a>, the other two are just global extensions
+of the numercial approach to get local sensitivity results, 
+see <a class="reference internal" href="#oat2" id="id19">[OAT2]</a>.</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>CAS_SENS:</td>
+<td>Central/Single Absolute Sensitivity</td>
+</tr>
+<tr class="row-even"><td>CTRS_SENS:</td>
+<td>Central/Single Total Sensitivity</td>
+</tr>
+<tr class="row-odd"><td>PE_SENS:</td>
+<td>Partial effect (van Griensven)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.GlobalOATSensitivity.PrepareSample">
+<code class="descname">PrepareSample</code><span class="sig-paren">(</span><em>nbaseruns</em>, <em>perturbation_factor</em>, <em>samplemethod='Sobol'</em>, <em>numerical_approach='central'</em>, <em>seedin=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity.PrepareSample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity.PrepareSample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sampling of the parameter space. No specific sampling preprocessing
+procedure is needed, only a general Monte Carlo sampling of the 
+parameter space is expected. To improve the sampling procedure, 
+Latin Hypercube or Sobol pseudo-random sampling can be preferred. The 
+latter is used in the pySTAN framework, but using the ModPar class
+individually enables Latin Hypercube and random sampling.</p>
+<p>Currently only uniform distributions are supported by the framework,
+but the Modpar class enables other dsitributions to sample the 
+parameter space and bypassing the sampling here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int</p>
+<blockquote>
+<div><p>number of samples to take for the analysis; highly dependent from
+the total number of input factors. range of 10000s is minimum.</p>
+</div></blockquote>
+<p><strong>perturbation_factor</strong> : float or list</p>
+<blockquote>
+<div><p>if only one number, all parameters get the same perturbation factor
+otherwise, _ndim elements in list</p>
+</div></blockquote>
+<p><strong>samplemethod</strong> : &#8216;sobol&#8217; or &#8216;lh&#8217;</p>
+<blockquote>
+<div><p>sampling method to use for the sampling</p>
+</div></blockquote>
+<p><strong>numerical_approach</strong> : &#8216;central&#8217; or &#8216;single&#8217;</p>
+<blockquote>
+<div><p>central approach needs n(2*k) runs, singel only n(k+1) runs;
+OAT calcluation depends on this.</p>
+</div></blockquote>
+<p><strong>seedin</strong> : int</p>
+<blockquote>
+<div><p>seed to start the Sobol sampling from. This enables to increase
+the sampling later on, by starting from the previous seedout.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>seed_out</strong> : int</p>
+<blockquote>
+<div><p>the last seed, useful for later use</p>
+</div></blockquote>
+<p><strong>parset2run</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>parameters to run the model (nbaseruns x ndim)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>Do the Sobol sampling always for the entire parameter space at the</li>
+</ul>
+<p>same time, for LH this doesn&#8217;t matter
+* Never extend the sampling size with using the same seed, since this
+generates duplicates of the samples
+* More information about the central or single numerical choice is given
+in <a class="reference internal" href="#oat2" id="id20">[OAT2]</a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="id21">
+<h3>Output plots and exports<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<dl class="method">
+<dt id="pystran.GlobalOATSensitivity.Get_ranking">
+<code class="descclassname">GlobalOATSensitivity.</code><code class="descname">Get_ranking</code><span class="sig-paren">(</span><em>choose_output=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity.Get_ranking"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity.Get_ranking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Only possible if Calc_sensitivity is already finished;
+every columns gets is one ranking and the overall_importance is calculated based on
+the lowest value of the other rankings (cfr. Griensven)</p>
+<p>rankmatrix: defines the rank of the parameter
+self.rankdict: defines overall rank of the parameters with name</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>choose_output: integer</strong></p>
+<blockquote class="last">
+<div><p>starting from 1 as the first output</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>TODO make a dataframe of pandas as output: rows is par, cols is output</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="74%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>rankdict (only when single output selected):</td>
+<td>Dictionary giving the ranking of the parameter</td>
+</tr>
+<tr class="row-even"><td>rankmatrix:</td>
+<td>Main output: gives for each parameter (rows) the ranking for the different outputs</td>
+</tr>
+<tr class="row-odd"><td>overall_importance:</td>
+<td>Returns the summarized importance of the parameter over the different outputs, by checking the minimal ranking of the parameters</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.GlobalOATSensitivity.plotsens">
+<code class="descclassname">GlobalOATSensitivity.</code><code class="descname">plotsens</code><span class="sig-paren">(</span><em>indice='PE'</em>, <em>width=0.5</em>, <em>addval=True</em>, <em>sortit=True</em>, <em>outputid=0</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity.plotsens"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity.plotsens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a barchart of either CAS, CTRS or PE based Senstivitity</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indice: PE, CAS or CTRS</strong></p>
+<blockquote>
+<div><p>choose which indice you want to show</p>
+</div></blockquote>
+<p><strong>width</strong> : float (0-1)</p>
+<blockquote>
+<div><p>width of the bars in the barchart</p>
+</div></blockquote>
+<p><strong>addval</strong> : bool</p>
+<blockquote>
+<div><p>if True, the sensitivity values are added to the graph</p>
+</div></blockquote>
+<p><strong>sortit</strong> : bool</p>
+<blockquote>
+<div><p>if True, larger values (in absolute value) are plotted closest to
+the y-axis</p>
+</div></blockquote>
+<p><strong>outputid</strong> : int</p>
+<blockquote>
+<div><p>the output to use whe multiple are compared; starts with 0</p>
+</div></blockquote>
+<p><strong>*args, **kwargs</strong> : args</p>
+<blockquote>
+<div><p>passed to the matplotlib.bar</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : matplotlib.figure.Figure object</p>
+<blockquote>
+<div><p>figure containing the output</p>
+</div></blockquote>
+<p><strong>ax1</strong> : axes.AxesSubplot object</p>
+<blockquote class="last">
+<div><p>the subplot</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_globaloat_CTRS.png"><img alt="_images/ex_globaloat_CTRS.png" src="_images/ex_globaloat_CTRS.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_globaloat_PE.png"><img alt="_images/ex_globaloat_PE.png" src="_images/ex_globaloat_PE.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.GlobalOATSensitivity.plot_rankmatrix">
+<code class="descclassname">GlobalOATSensitivity.</code><code class="descname">plot_rankmatrix</code><span class="sig-paren">(</span><em>outputnames</em>, <em>fontsize=14</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity.plot_rankmatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity.plot_rankmatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make an overview plot of the resulting ranking of the different parameters
+for the different outputs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputnames</strong> : list of strings</p>
+<blockquote>
+<div><p>The names of the outputs in the colomns</p>
+</div></blockquote>
+<p><strong>fontsize: int</strong></p>
+<blockquote class="last">
+<div><p>size of the numbers of the ranking</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<a class="reference internal image-reference" href="_images/ex_globaloat_sensmatrix.png"><img alt="_images/ex_globaloat_sensmatrix.png" src="_images/ex_globaloat_sensmatrix.png" style="width: 600.0px; height: 450.0px;" /></a>
+<dl class="method">
+<dt id="pystran.GlobalOATSensitivity.latexresults">
+<code class="descclassname">GlobalOATSensitivity.</code><code class="descname">latexresults</code><span class="sig-paren">(</span><em>outputnames</em>, <em>name='GlobalOATtable.tex'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity.latexresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity.latexresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print results rankmatrix in a &#8220;deluxetable&#8221; Latex</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputnames</strong> : list of strings</p>
+<blockquote>
+<div><p>The names of the outputs in the colomns</p>
+</div></blockquote>
+<p><strong>name</strong> : str.tex</p>
+<blockquote class="last">
+<div><p>output file name; use .tex extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>\begin{table}{lccccccccccc}
+\tablewidth{0pc}
+\tablecolumns{12}
+\caption{Global OAT parameter ranking\label{tab:globaloatrank}}
+\tablehead{
+ &amp; o1 &amp; o2 &amp; o3 &amp; o4 &amp; o5 &amp; o6 &amp; o7 &amp; o8 &amp; o9 &amp; o10 &amp; o11  }
+\startdata
+$X_1$ &amp; 4 &amp; 4 &amp; 2 &amp; 3 &amp; 3 &amp; 3 &amp; 2 &amp; 3 &amp; 4 &amp; 4 &amp; 3\\
+$X_2$ &amp; 3 &amp; 1 &amp; 3 &amp; 4 &amp; 4 &amp; 1 &amp; 3 &amp; 2 &amp; 1 &amp; 3 &amp; 2\\
+$X_3$ &amp; 1 &amp; 6 &amp; 4 &amp; 6 &amp; 2 &amp; 4 &amp; 5 &amp; 4 &amp; 2 &amp; 1 &amp; 4\\
+$X_4$ &amp; 2 &amp; 2 &amp; 6 &amp; 5 &amp; 6 &amp; 6 &amp; 4 &amp; 6 &amp; 3 &amp; 5 &amp; 1\\
+$X_5$ &amp; 6 &amp; 5 &amp; 5 &amp; 1 &amp; 5 &amp; 2 &amp; 6 &amp; 1 &amp; 6 &amp; 6 &amp; 6\\
+$X_6$ &amp; 5 &amp; 3 &amp; 1 &amp; 2 &amp; 1 &amp; 5 &amp; 1 &amp; 5 &amp; 5 &amp; 2 &amp; 5\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pystran.GlobalOATSensitivity.txtresults">
+<code class="descclassname">GlobalOATSensitivity.</code><code class="descname">txtresults</code><span class="sig-paren">(</span><em>outputnames</em>, <em>name='GlobalOATresults.txt'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_globaloat.html#GlobalOATSensitivity.txtresults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.GlobalOATSensitivity.txtresults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Results rankmatrix in txt file to load in eg excel</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>outputnames</strong> : list of strings</p>
+<blockquote>
+<div><p>The names of the outputs in the colomns</p>
+</div></blockquote>
+<p><strong>name</strong> : str.txt</p>
+<blockquote class="last">
+<div><p>output file name; use .txt extension in the name</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span>Par      o1      o2      o3      o4      o5      o6      o7      o8      o9      o10     o11
+$X_1$    4       4       2       3       3       3       2       3       4       4       3
+$X_2$    3       1       3       4       4       1       3       2       1       3       2
+$X_3$    1       6       4       6       2       4       5       4       2       1       4
+$X_4$    2       2       6       5       6       6       4       6       3       5       1
+$X_5$    6       5       5       1       5       2       6       1       6       6       6
+$X_6$    5       3       1       2       1       5       1       5       5       2       5
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="dynamic-identifiability-analysis-dynia">
+<h2>Dynamic Identifiability Analysis (DYNIA)<a class="headerlink" href="#dynamic-identifiability-analysis-dynia" title="Permalink to this headline">¶</a></h2>
+<p>added soon</p>
+</div>
+<div class="section" id="regional-sensitivity-analysis-rsa">
+<h2>Regional Sensitivity Analysis (RSA)<a class="headerlink" href="#regional-sensitivity-analysis-rsa" title="Permalink to this headline">¶</a></h2>
+<p>Extra info added soon</p>
+<div class="section" id="main-rsa-methods">
+<h3>Main RSA methods<a class="headerlink" href="#main-rsa-methods" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="pystran.RegionalSensitivity">
+<em class="property">class </em><code class="descclassname">pystran.</code><code class="descname">RegionalSensitivity</code><span class="sig-paren">(</span><em>parsin</em>, <em>ModelType='pyFUSE'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_rsa.html#RegionalSensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.RegionalSensitivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regional Sensitivity Analysis (Monte Carlo Filtering).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>ParsIn</strong> : list</p>
+<blockquote>
+<div><p>either a list of (min,max,&#8217;name&#8217;) values, 
+[(min,max,&#8217;name&#8217;),(min,max,&#8217;name&#8217;),...(min,max,&#8217;name&#8217;)]
+or a list of ModPar instances</p>
+</div></blockquote>
+<p><strong>ModelType</strong> : pyFUSE | PCRaster | external</p>
+<blockquote class="last">
+<div><p>Give the type of model working with</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The method basically ranks/selects parameter sets based on a evaluation 
+criterion and checks the marginal influence of the different parameters
+on this criterion. In literature, the method is known as Regional 
+Sensitivity Analysis (RSA, <a class="reference internal" href="#r1" id="id22">[R1]</a>), but also describe in <a class="reference internal" href="#r2" id="id23">[R2]</a> and referred
+to as Monte Carlo Filtering. Intially introduced by <a class="reference internal" href="#r1" id="id24">[R1]</a> with a split
+between behavioural and non-behavioural accombined with a Kolmogorov-
+smirnov rank test (necessary, but nof sufficient to determine insensitive),
+applied with ten-bins split of the behavioural by <a class="reference internal" href="#r3" id="id25">[R3]</a> and a ten bins
+split of the entire parameter range by <a class="reference internal" href="#r4" id="id26">[R4]</a>.</p>
+<p>The method is directly connected to the GLUE approach, using the 
+behavioural simulation to define prediction limits of the model output. 
+Therefore, this class is used as baseclass for the GLUE uncertainty.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="r1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[R1]</td><td><em>(<a class="fn-backref" href="#id22">1</a>, <a class="fn-backref" href="#id24">2</a>)</em> Hornberger, G.M., and R.C. Spear. An Approach to the Preliminary 
+Analysis of Environmental Systems. Journal of Environmental 
+Management 12 (1981): 7–18.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id23">[R2]</a></td><td>Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo, 
+Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano 
+Tarantola. Global Sensitivity Analysis, The Primer. 
+John Wiley &amp; Sons Ltd, 2008.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id25">[R3]</a></td><td>Freer, Jim, Keith Beven, and Bruno Ambroise. Bayesian Estimation 
+of Uncertainty in Runoff Prediction and the Value of Data: An 
+Application of the GLUE Approach. Water Resources Research 32, 
+no. 7 (1996): 2161. 
+<a class="reference external" href="http://www.agu.org/pubs/crossref/1996/95WR03723.shtml">http://www.agu.org/pubs/crossref/1996/95WR03723.shtml</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id26">[R4]</a></td><td>Wagener, Thorsten, D. P. Boyle, M. J. Lees, H. S. Wheater, 
+H. V. Gupta, and S. Sorooshian. A Framework for Development and 
+Application of Hydrological Models. Hydrology and Earth System 
+Sciences 5, no. 1 (2001): 13–26.</td></tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pystran.RegionalSensitivity.PrepareSample">
+<code class="descname">PrepareSample</code><span class="sig-paren">(</span><em>nbaseruns</em>, <em>seedin=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_rsa.html#RegionalSensitivity.PrepareSample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.RegionalSensitivity.PrepareSample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sampling of the parameter space. No specific sampling preprocessing
+procedure is needed, only a general Monte Carlo sampling of the 
+parameter space is expected. To improve the sampling procedure, 
+Latin Hypercube or Sobol pseudo-random sampling can be preferred. The 
+latter is used in the pySTAN framework, but using the ModPar class
+individually enables Latin Hypercube and random sampling.</p>
+<p>Currently only uniform distributions are supported by the framework,
+but the Modpar class enables other dsitributions to sample the 
+parameter space and bypassing the sampling here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int</p>
+<blockquote>
+<div><p>number of samples to take for the analysis; highly dependent from
+the total number of input factors. range of 10000s is minimum.</p>
+</div></blockquote>
+<p><strong>seedin</strong> : int</p>
+<blockquote>
+<div><p>seed to start the Sobol sampling from. This enables to increase
+the sampling later on, by starting from the previous seedout.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>seed_out</strong> : int</p>
+<blockquote>
+<div><p>the last seed, useful for later use</p>
+</div></blockquote>
+<p><strong>parset2run</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>parameters to run the model (nbaseruns x ndim)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>Do the Sobol sampling always for the entire parameter space at the</li>
+</ul>
+<p>same time, for LH this doesn&#8217;t matter
+* Never extend the sampling size with using the same seed, since this
+generates duplicates of the samples</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.RegionalSensitivity.checkprobs">
+<code class="descname">checkprobs</code><span class="sig-paren">(</span><em>arrtocheck</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_rsa.html#RegionalSensitivity.checkprobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.RegionalSensitivity.checkprobs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pystran.RegionalSensitivity.select_behavioural">
+<code class="descname">select_behavioural</code><span class="sig-paren">(</span><em>output</em>, <em>method='treshold'</em>, <em>threshold=0.0</em>, <em>percBest=0.2</em>, <em>norm=True</em>, <em>mask=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_rsa.html#RegionalSensitivity.select_behavioural"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.RegionalSensitivity.select_behavioural" title="Permalink to this definition">¶</a></dt>
+<dd><p>Select bevahvioural parameter sets, based on output evaluation 
+criterion used. 
+w
+The algorithm makes only a &#8216;mask&#8217; for further operation, in order to
+avoid memory overload by copying matrices</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>threshold :</strong></p>
+<p><strong>output</strong> : ndarray</p>
+<blockquote>
+<div><p>Nx1</p>
+</div></blockquote>
+<p><strong>Method can be &#8216;treshold&#8217; based or &#8216;percentage&#8217; based</strong></p>
+<p><strong>All arrays must have same dimension in 0-direction (vertical); output-function only 1 column</strong></p>
+<p><strong>InputPar is nxnpar; output is nx1; Output nxnTimesteps</strong></p>
+<p><strong>this most be done for each structure independently</strong></p>
+<p class="last"><strong>Output of OFfunctions/Likelihoods normalised or not (do it if different likelihoods have to be plotted together)</strong></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="generalised-likelihood-uncertainty-estimation-glue">
+<h2>Generalised Likelihood Uncertainty Estimation (GLUE)<a class="headerlink" href="#generalised-likelihood-uncertainty-estimation-glue" title="Permalink to this headline">¶</a></h2>
+<p>added soon</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sensitivity Analysis</a><ul>
+<li><a class="reference internal" href="#sensitivity-base-class">Sensitivity Base class</a><ul>
+<li><a class="reference internal" href="#interaction-with-models">Interaction with models</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#morris-screening-method">Morris Screening method</a><ul>
+<li><a class="reference internal" href="#main-morris-screening-methods">Main Morris screening methods</a></li>
+<li><a class="reference internal" href="#testing-the-selected-traject-optimization">Testing the selected traject optimization</a></li>
+<li><a class="reference internal" href="#output-plots-and-exports">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#standardized-regression-coefficients-src-method">Standardized Regression Coefficients (SRC) method</a><ul>
+<li><a class="reference internal" href="#main-src-methods">Main SRC methods</a></li>
+<li><a class="reference internal" href="#quick-analysis-of-the-scatter-plots-of-the-ouput-versus-the-parameter-values">Quick analysis of the scatter plots of the ouput versus the parameter values</a></li>
+<li><a class="reference internal" href="#id9">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sobol-variance-based-method">Sobol Variance based method</a><ul>
+<li><a class="reference internal" href="#main-sobol-variance-methods">Main Sobol variance methods</a></li>
+<li><a class="reference internal" href="#check-the-convergence-of-the-analysis">Check the convergence of the analysis</a></li>
+<li><a class="reference internal" href="#id16">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#latin-hypercube-oat-method">Latin-Hypercube OAT method</a><ul>
+<li><a class="reference internal" href="#main-global-oat-methods">Main GLobal OAT methods</a></li>
+<li><a class="reference internal" href="#id21">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dynamic-identifiability-analysis-dynia">Dynamic Identifiability Analysis (DYNIA)</a></li>
+<li><a class="reference internal" href="#regional-sensitivity-analysis-rsa">Regional Sensitivity Analysis (RSA)</a><ul>
+<li><a class="reference internal" href="#main-rsa-methods">Main RSA methods</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#generalised-likelihood-uncertainty-estimation-glue">Generalised Likelihood Uncertainty Estimation (GLUE)</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parameter.html"
+                        title="previous chapter">Model Parameters</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/sensitivity.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="parameter.html" title="Model Parameters"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pystran 0.1.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, S. Van Hoey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>

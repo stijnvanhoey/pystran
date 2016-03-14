@@ -1,0 +1,832 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pystran.sensitivity_sobol &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pystran.sensitivity_sobol</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author: VHOEYS</span>
+<span class="sd">development supported by Flemish Institute for Technological Research (VITO)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">sensitivity_base</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">sobol_lib</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">extrafunctions</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">latextablegenerator</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">plot_functions_rev</span> <span class="kn">import</span> <span class="n">plotbar</span><span class="p">,</span> <span class="n">interactionplot</span><span class="p">,</span> <span class="n">plot_evolution</span>
+
+<span class="c1">#(enhancement: do sobol for multiple outputs, iterating the post)</span>
+<div class="viewcode-block" id="SobolVariance"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance">[docs]</a><span class="k">class</span> <span class="nc">SobolVariance</span><span class="p">(</span><span class="n">SensitivityAnalysis</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Sobol Sensitivity Analysis Variance Based</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+<span class="sd">    ParsIn : list</span>
+<span class="sd">        either a list of (min,max,&#39;name&#39;) values, </span>
+<span class="sd">        [(min,max,&#39;name&#39;),(min,max,&#39;name&#39;),...(min,max,&#39;name&#39;)]</span>
+<span class="sd">        or a list of ModPar instances</span>
+<span class="sd">        </span>
+<span class="sd">    ModelType : pyFUSE | PCRaster | external</span>
+<span class="sd">        Give the type of model working with</span>
+<span class="sd">        </span>
+<span class="sd">    Attributes</span>
+<span class="sd">    -------------</span>
+<span class="sd">    parset2run : ndarray</span>
+<span class="sd">        every row is a parameter set to run the model for. All sensitivity methods have this attribute to interact with base-class running</span>
+<span class="sd">        </span>
+<span class="sd">    Examples</span>
+<span class="sd">    ------------</span>
+<span class="sd">    &gt;&gt;&gt; ai=[0, 1, 4.5, 9, 99, 99, 99, 99]</span>
+<span class="sd">    &gt;&gt;&gt; alphai = 0.5 * np.ones(len(ai))</span>
+<span class="sd">    &gt;&gt;&gt; Xi = [(0.0,1.0,&#39;par1&#39;),(0.0,1.0,&#39;par2&#39;),(0.0,1.0,&#39;par3&#39;),(0.0,1.0,&#39;par4&#39;),</span>
+<span class="sd">          (0.0,1.0,&#39;par5&#39;),(0.0,1.0,&#39;par6&#39;),(0.0,1.0,&#39;par7&#39;),(0.0,1.0,&#39;par8&#39;),]</span>
+<span class="sd">    &gt;&gt;&gt; di=np.random.random(8)</span>
+<span class="sd">    &gt;&gt;&gt; #set up sensitivity analysis</span>
+<span class="sd">    &gt;&gt;&gt; sens2 = SobolVariance(Xi, ModelType = &#39;testmodel&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; #Sampling strategy</span>
+<span class="sd">    &gt;&gt;&gt; sens2.SobolVariancePre(1500)</span>
+<span class="sd">    &gt;&gt;&gt; #Run model + evaluate the output</span>
+<span class="sd">    &gt;&gt;&gt; sens2.runTestModel(&#39;analgfunc&#39;, [ai, alphai, di]) #here normally other model</span>
+<span class="sd">    &gt;&gt;&gt; #results in txt file </span>
+<span class="sd">    &gt;&gt;&gt; sens2.txtresults(name=&#39;SobolTestOut.txt&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; #results in tex-table </span>
+<span class="sd">    &gt;&gt;&gt; sens2.latexresults(name=&#39;SobolTestOut.tex&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; #Plots</span>
+<span class="sd">    &gt;&gt;&gt; sens2.plotSi(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; sens2.plotSTi(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; sens2.plotSTij()</span>
+<span class="sd">    &gt;&gt;&gt; Si_evol, STi_evol = sens2.sens_evolution(color=&#39;k&#39;)    </span>
+<span class="sd">    </span>
+<span class="sd">    Notes</span>
+<span class="sd">    --------</span>
+<span class="sd">    Calculates first and total order, and second order Total Sensitivity, </span>
+<span class="sd">    according to [S1]_ , higher order terms and bootstrapping is not (yet) included    </span>
+<span class="sd">    </span>
+<span class="sd">    References</span>
+<span class="sd">    ------------</span>
+<span class="sd">    ..  [S1] Saltelli, A., P. Annoni, I. Azzini, F. Campolongo, M. Ratto, </span>
+<span class="sd">        S. Tarantola,(2010) Variance based sensitivity analysis of model output. </span>
+<span class="sd">        Design and estimator for the total sensitivity index, Computer Physics </span>
+<span class="sd">        Communications, 181, 259–270</span>
+<span class="sd">    ..  [S2] Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo, </span>
+<span class="sd">        Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano Tarantola. </span>
+<span class="sd">        Global Sensitivity Analysis, The Primer. John Wiley &amp; Sons Ltd, 2008.</span>
+<span class="sd">        </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">,</span> <span class="n">ModelType</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span><span class="p">):</span>
+        <span class="n">SensitivityAnalysis</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsin</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_methodname</span> <span class="o">=</span> <span class="s1">&#39;SobolVariance&#39;</span>
+        
+        <span class="k">if</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;pyFUSE&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is built up by the pyFUSE environment&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;external&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;pyFUSE&#39;</span>           
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is externally run&#39;</span>            
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;PCRaster&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;PCRasterPython&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a PCRasterPython Framework instance&#39;</span>
+        <span class="k">elif</span> <span class="n">ModelType</span> <span class="o">==</span> <span class="s1">&#39;testmodel&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeltype</span> <span class="o">=</span> <span class="s1">&#39;testmodel&#39;</span>
+            <span class="k">print</span> <span class="s1">&#39;The analysed model is a testmodel&#39;</span>            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Not supported model type&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">LB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">el</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">UB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span><span class="p">])</span>       
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_methodname</span><span class="p">,</span> <span class="s1">&#39;based Sensitivity Analysis.&#39;</span>
+
+<div class="viewcode-block" id="SobolVariance.Sobolsampling"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.Sobolsampling">[docs]</a>    <span class="k">def</span> <span class="nf">Sobolsampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="p">,</span> <span class="n">seedin</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Performs Sobol sampling procedure, given a set of ModPar instances, </span>
+<span class="sd">        or by a set of (min,max) values in a list. </span>
+
+<span class="sd">        This function is mainly used as help function, but can be used to </span>
+<span class="sd">        perform Sobol sampling for other purposes</span>
+<span class="sd">        </span>
+<span class="sd">        Todo: improve seed handling, cfr. bioinspyred package</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        nbaseruns : int</span>
+<span class="sd">            number of runs to do</span>
+<span class="sd">        seed : int</span>
+<span class="sd">            to et the seed point for the sobol sampling</span>
+<span class="sd">        </span>
+<span class="sd">        Examples</span>
+<span class="sd">        ---------    </span>
+<span class="sd">        &gt;&gt;&gt; p1 = ModPar(&#39;tp1&#39;,2.0,4.0,3.0,&#39;randomUniform&#39;)    </span>
+<span class="sd">        &gt;&gt;&gt; p2 = ModPar(&#39;tp2&#39;,1.0,5.0,4.0,&#39;randomUniform&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; p3 = ModPar(&#39;tp3&#39;,0.0,1.0,0.1,&#39;randomUniform&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; sobanal1 = SobolVariance([p1,p2,p3])</span>
+<span class="sd">        &gt;&gt;&gt; sobanal2 = SobolVariance([(2.0,4.0,&#39;tp1&#39;),(1.0,5.0,&#39;tp2&#39;),(0.0,1.0,&#39;tp3&#39;)])</span>
+<span class="sd">        &gt;&gt;&gt; pars1 = sobanal.Sobolsampling(100,seed=1)</span>
+<span class="sd">        &gt;&gt;&gt; pars2 = sobanal.Sobolsampling(100,seed=1)</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -------</span>
+<span class="sd">        DO SOBOL SAMPLING ALWAYS FOR ALL PARAMETERS AT THE SAME TIME!</span>
+<span class="sd">        </span>
+<span class="sd">        Duplicates the entire parameter set to be able to divide in A and B</span>
+<span class="sd">        matric        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># generate a (N,2k) matrix with </span>
+        <span class="n">FacIn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span>
+        <span class="n">FacIn</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">FacIn</span><span class="p">)</span>
+        
+        <span class="n">ndim2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">*</span><span class="mi">2</span>
+
+        <span class="n">Par2run</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nbaseruns</span><span class="p">,</span><span class="n">ndim2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Par2run</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nbaseruns</span><span class="p">,</span><span class="n">ndim2</span><span class="p">))</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>   
+            <span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">seed_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">i4_sobol</span><span class="p">(</span><span class="n">ndim2</span><span class="p">,</span> <span class="n">seedin</span><span class="p">)</span>
+            <span class="n">Par2run</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">r</span>        
+            <span class="n">seedin</span> <span class="o">=</span> <span class="n">seed_out</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim2</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Par2run</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rescale</span><span class="p">(</span><span class="n">Par2run</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">FacIn</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> 
+                                        <span class="n">FacIn</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span></div>
+
+    <span class="k">def</span> <span class="nf">conditional_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="p">,</span> <span class="n">cond_dict</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        parname1 need to be larger parname2</span>
+<span class="sd">       </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">parname1</span> <span class="o">=</span> <span class="n">cond_dict</span><span class="p">[</span><span class="s1">&#39;name1&#39;</span><span class="p">]</span>
+        <span class="n">parname2</span> <span class="o">=</span> <span class="n">cond_dict</span><span class="p">[</span><span class="s1">&#39;name2&#39;</span><span class="p">]</span>
+        <span class="n">condition</span> <span class="o">=</span> <span class="n">cond_dict</span><span class="p">[</span><span class="s1">&#39;condition&#39;</span><span class="p">]</span>
+            
+        <span class="c1">#idea here, make it twice the size of the nbaseruns and past afterwards next to each other</span>
+        <span class="c1">#to emulate the ndim *2        </span>
+        
+        <span class="c1"># generate a (N,2k) matrix with </span>
+        <span class="n">FacIn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parsin</span>
+        <span class="n">FacIn</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">FacIn</span><span class="p">)</span>
+        
+        <span class="n">ndim2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">*</span><span class="mi">2</span>
+
+        <span class="n">Par2run</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nbaseruns</span><span class="p">,</span> <span class="n">ndim2</span><span class="p">))</span>
+        
+        <span class="c1">#HERE THE CONDITIONAL PART NEEDS TO BE ADDED</span>
+        <span class="c1">#conservative strategy: sample random untill enough with the conditions are found</span>
+        <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">print</span> <span class="s1">&#39;get samples...&#39;</span>
+        <span class="k">while</span> <span class="n">cnt</span> <span class="o">&lt;</span> <span class="n">nbaseruns</span><span class="p">:</span>
+            <span class="n">newset_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">)</span>
+            <span class="n">newset_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">par</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pars</span><span class="p">):</span>
+                <span class="n">newset_a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">avalue</span><span class="p">()</span>
+                <span class="n">newset_b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">par</span><span class="o">.</span><span class="n">avalue</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">par</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">parname1</span><span class="p">:</span>
+                    <span class="n">parval_a1</span> <span class="o">=</span> <span class="n">newset_a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">parval_b1</span> <span class="o">=</span> <span class="n">newset_b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">par</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">parname2</span><span class="p">:</span>
+                    <span class="n">parval_a2</span> <span class="o">=</span> <span class="n">newset_a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>                
+                    <span class="n">parval_b2</span> <span class="o">=</span> <span class="n">newset_b</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>                
+            <span class="c1">#check is condition met</span>
+            <span class="k">if</span> <span class="n">condition</span> <span class="o">==</span> <span class="s1">&#39;lt&#39;</span> <span class="ow">or</span> <span class="n">condition</span> <span class="o">==</span> <span class="s1">&#39;&lt;&#39;</span><span class="p">:</span>
+                <span class="c1">#is actually the same as &gt;</span>
+                <span class="k">if</span> <span class="n">parval_a1</span> <span class="o">&lt;</span> <span class="n">parval_a2</span> <span class="ow">and</span> <span class="n">parval_a1</span> <span class="o">&lt;</span> <span class="n">parval_b2</span> <span class="ow">and</span> \
+                            <span class="n">parval_b1</span> <span class="o">&lt;</span> <span class="n">parval_b2</span> <span class="ow">and</span> <span class="n">parval_b1</span> <span class="o">&lt;</span> <span class="n">parval_a1</span><span class="p">:</span>
+                    <span class="n">Par2run</span><span class="p">[</span><span class="n">cnt</span><span class="p">,:</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span> <span class="o">=</span> <span class="n">newset_a</span>
+                    <span class="n">Par2run</span><span class="p">[</span><span class="n">cnt</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:]</span> <span class="o">=</span> <span class="n">newset_b</span>
+                    <span class="n">cnt</span> <span class="o">+=</span><span class="mi">1</span> 
+
+                
+            <span class="k">elif</span> <span class="n">condition</span> <span class="o">==</span> <span class="s1">&#39;gt&#39;</span> <span class="ow">or</span> <span class="n">condition</span> <span class="o">==</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">parval_a1</span> <span class="o">&gt;</span> <span class="n">parval_a2</span> <span class="ow">and</span> <span class="n">parval_a1</span> <span class="o">&gt;</span> <span class="n">parval_b2</span> <span class="ow">and</span> \
+                            <span class="n">parval_b1</span> <span class="o">&gt;</span> <span class="n">parval_b2</span> <span class="ow">and</span> <span class="n">parval_b1</span> <span class="o">&gt;</span> <span class="n">parval_a1</span><span class="p">:</span>
+                    <span class="n">Par2run</span><span class="p">[</span><span class="n">cnt</span><span class="p">,:</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span> <span class="o">=</span> <span class="n">newset_a</span>
+                    <span class="n">Par2run</span><span class="p">[</span><span class="n">cnt</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:]</span> <span class="o">=</span> <span class="n">newset_b</span>
+                    <span class="n">cnt</span> <span class="o">+=</span><span class="mi">1</span>   
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Only comparisons lt and gt are possible&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Par2run</span> <span class="o">=</span> <span class="n">Par2run</span>
+        <span class="c1">#put last half next to first half</span>
+<span class="c1">#        self.Par2run = np.concatenate((Par2run[:nbaseruns,:], </span>
+<span class="c1">#                                          Par2run[nbaseruns:,:]), axis = 1)</span>
+
+
+<div class="viewcode-block" id="SobolVariance.SobolVariancePre"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.SobolVariancePre">[docs]</a>    <span class="k">def</span> <span class="nf">SobolVariancePre</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nbaseruns</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">repl</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                         <span class="n">conditional</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Set up the sampling procedure of N*(k+2) samples</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -------------</span>
+<span class="sd">        nbaseruns : int</span>
+<span class="sd">            number of samples for the basic analysis, total number of model runs</span>
+<span class="sd">            is Nmc(k+2), with k the number of factors</span>
+<span class="sd">        seed : int</span>
+<span class="sd">            to set the seed point for the sobol sampling; enables to </span>
+<span class="sd">            enlarge a current sample</span>
+<span class="sd">        repl : int</span>
+<span class="sd">            Replicates the entire sampling procedure. Can be usefull to test if the</span>
+<span class="sd">            current sampling size is large enough to get convergence in the </span>
+<span class="sd">            sensitivity results (bootstrapping is currently not included) </span>
+<span class="sd">            </span>
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        Following the Global sensitivity analysis, [S2]_, </span>
+<span class="sd">        but updated for [S1]_ for more optimal convergence of the sensitivity</span>
+<span class="sd">        indices</span>
+<span class="sd">        &#39;&#39;&#39;</span>       
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">repl</span> <span class="o">=</span> <span class="n">repl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="o">=</span> <span class="n">nbaseruns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totalruns</span> <span class="o">=</span> <span class="n">nbaseruns</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">)</span><span class="o">*</span><span class="n">repl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startedseed</span> <span class="o">=</span> <span class="n">seed</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">startedseed</span>
+
+        <span class="k">print</span> <span class="s1">&#39;The total cost of the analysis well be </span><span class="si">%d</span><span class="s1"> Monte Carlo Runs&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">nbaseruns</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">)</span><span class="o">*</span><span class="n">repl</span><span class="p">)</span> 
+        
+        <span class="c1">#Set up the matrices</span>
+        <span class="c1">#---------------------</span>
+<span class="c1">#        # generate a (N,2k) matrix with </span>
+<span class="c1">#        FacIn = self._parsin</span>
+<span class="c1">#        FacIn.extend(FacIn)</span>
+        <span class="k">if</span> <span class="n">conditional</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Sobolsampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="o">*</span><span class="n">repl</span><span class="p">,</span> <span class="n">seedin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">startedseed</span> <span class="p">)</span> <span class="c1">#</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conditional_sampling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="o">*</span><span class="n">repl</span><span class="p">,</span> 
+                                      <span class="n">cond_dict</span> <span class="o">=</span> <span class="n">conditional</span><span class="p">)</span>
+                                      
+        <span class="c1">#the resulting sobol quasi-random is not entirally the same as in paper</span>
+        <span class="c1">#Saltelli 2012, Variance based sensitivity analysis of model output. </span>
+        <span class="c1"># Design and estimator for the total sensitivity index</span>
+        <span class="c1"># But implementation cited elsewhere</span>
+        
+        <span class="n">sAB</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Par2run</span>
+        <span class="k">print</span> <span class="n">sAB</span><span class="o">.</span><span class="n">shape</span>
+        
+        <span class="n">Aall</span> <span class="o">=</span> <span class="n">sAB</span><span class="p">[:,:</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">]</span> 
+        <span class="n">Ball</span> <span class="o">=</span> <span class="n">sAB</span><span class="p">[:,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">:]</span>
+       
+    <span class="c1">#    Ctorun = np.vstack((A,B))</span>
+    
+        <span class="c1">#take first</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">Aall</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="p">,:]</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">Ball</span><span class="p">[</span><span class="mi">0</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="p">,:]</span>
+      
+        <span class="n">Ctorun</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+            <span class="n">C</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">C</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">B</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>        
+            <span class="n">Ctorun</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">Ctorun</span><span class="p">,</span> <span class="n">C</span><span class="p">))</span>
+<span class="c1">#        print self.Ctorun.shape</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl</span><span class="p">,</span><span class="s1">&#39; replications of analysis are used&#39;</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">repl</span><span class="p">):</span>
+                <span class="n">A</span> <span class="o">=</span> <span class="n">Aall</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="p">]</span>
+                <span class="n">B</span> <span class="o">=</span> <span class="n">Ball</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="p">]</span>
+                <span class="n">Ctorun</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">Ctorun</span><span class="p">,</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+                    <span class="c1">#version 1993</span>
+            <span class="c1">#        C = B.copy()</span>
+            <span class="c1">#        C[:,i] = A[:,i]</span>
+            
+                    <span class="c1">#version 2010 Saltelli et al</span>
+                    <span class="n">C</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">C</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">B</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>        
+                    <span class="n">Ctorun</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">Ctorun</span><span class="p">,</span> <span class="n">C</span><span class="p">))</span>   
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ctorun</span> <span class="o">=</span> <span class="n">Ctorun</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span> <span class="o">=</span> <span class="n">Ctorun</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totalnumberruns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parset2run</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ctorun</span><span class="o">.</span><span class="n">shape</span>
+        <span class="c1">#Model needs to run for everyline of the returned matrix  </span>
+        <span class="k">print</span> <span class="s1">&#39;The parameter sets to calculate the model are stored in self.parset2run and can be extracted&#39;</span></div>
+               
+
+<div class="viewcode-block" id="SobolVariance.SobolVariancePost"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.SobolVariancePost">[docs]</a>    <span class="k">def</span> <span class="nf">SobolVariancePost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">repl</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">adaptedbaserun</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">forevol</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate first and total indices based on model output and sampled</span>
+<span class="sd">        values</span>
+<span class="sd">               </span>
+<span class="sd">        the sensmatrices for replica, </span>
+<span class="sd">        have repititions in the rows, columns are the factors</span>
+<span class="sd">        </span>
+<span class="sd">        only output =&gt; make multiple outputs (todo!!),</span>
+<span class="sd">        by using the return, different outputs can be tested...</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        output : ndarray</span>
+<span class="sd">            Nx1 matrix with the model outputs</span>
+<span class="sd">        repl :  int</span>
+<span class="sd">            number of replicates used</span>
+<span class="sd">        adaptedbaserun : int</span>
+<span class="sd">            number of baseruns to base calculations on  </span>
+<span class="sd">        forevol : boolean</span>
+<span class="sd">            True if used for evaluating the evolution</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        The calculation methods follows as the directions given in [S1]_</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_outputbk</span> <span class="o">=</span> <span class="n">output</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Sobol works only wit one output at a time, provide 1d array&#39;</span><span class="p">)</span>
+<span class="c1">#        if output.shape[0] == output.size:</span>
+<span class="c1">#            self.output2evaluate = output #needs adaptation: if given here, update, otherwise internal</span>
+<span class="c1">#        else:</span>
+<span class="c1">#            if forevol == False:</span>
+<span class="c1">#                raise Exception(&#39;Sobol variance evaluation considers only 1 ouput value (1D arrays)&#39;)</span>
+        
+        <span class="k">if</span> <span class="n">repl</span> <span class="o">&lt;&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Control if your number of replicates is correct,</span><span class="se">\</span>
+<span class="s1">                            since it does not agree with the saved number&#39;</span><span class="p">)</span>   
+        <span class="c1">#Needed for the vonvergense test </span>
+        <span class="k">if</span> <span class="n">adaptedbaserun</span><span class="p">:</span>
+            <span class="n">baseruns</span> <span class="o">=</span> <span class="n">adaptedbaserun</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">baseruns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span>            
+                            
+        <span class="c1">#prepare sensitivity matrices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Si</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">repl</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">STi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">repl</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">repl</span> <span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STij</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">repl</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">STij</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">))</span>
+            
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">repl</span><span class="p">):</span>
+            <span class="c1">#Get outputs of A and B</span>
+    <span class="c1">#        yA = output[0:baseruns]  </span>
+    <span class="c1">#        yB = output[baseruns:2*baseruns]          </span>
+            <span class="n">yA</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">baseruns</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">]</span> 
+            <span class="n">yB</span> <span class="o">=</span> <span class="n">output</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">]</span>  
+            
+            <span class="k">for</span> <span class="n">fac</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span> <span class="c1">#for everey factor</span>
+    <span class="c1">#            yC = output[(fac+2)*baseruns:(fac+3)*baseruns]</span>
+                <span class="n">yC</span> <span class="o">=</span> <span class="n">output</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="n">fac</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="n">fac</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">]</span>    
+        
+    <span class="c1">#            Vtot = np.var(output[:2*baseruns])</span>
+                <span class="n">Vtot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">baseruns</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">2</span><span class="p">):(</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">])</span>                    
+                
+                <span class="c1">#First order effect</span>
+                <span class="n">Vi</span><span class="o">=</span><span class="n">yB</span><span class="o">*</span><span class="p">(</span><span class="n">yC</span><span class="o">-</span><span class="n">yA</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">fac</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Vi</span><span class="p">)</span><span class="o">/</span><span class="n">Vtot</span>
+        
+                <span class="c1">#Total order effect</span>
+                <span class="n">VT</span><span class="o">=</span><span class="p">(</span><span class="n">yA</span><span class="o">-</span><span class="n">yC</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">fac</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">VT</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">Vtot</span><span class="p">)</span>
+                
+            <span class="c1"># Total indices for pairs of factors (at same cost)</span>
+            <span class="c1">#k(k-1)/2 interaction terms to be calculated (fills upper half of matrix)</span>
+            <span class="k">for</span> <span class="n">fac1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+                <span class="n">yC1</span> <span class="o">=</span> <span class="n">output</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="n">fac1</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="n">fac1</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">fac2</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">fac1</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+                    <span class="n">yC2</span> <span class="o">=</span> <span class="n">output</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="n">fac2</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="n">fac2</span><span class="o">+</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="o">+</span><span class="n">i</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">baseruns</span><span class="p">]</span>
+                    <span class="n">VTij</span> <span class="o">=</span> <span class="p">(</span><span class="n">yC1</span><span class="o">-</span><span class="n">yC2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>  <span class="c1">#element wise</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">STij</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">fac1</span><span class="p">,</span><span class="n">fac2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">VTij</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">Vtot</span><span class="p">)</span>           
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">STij</span><span class="p">[</span><span class="n">fac1</span><span class="p">,</span><span class="n">fac2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">VTij</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">Vtot</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">STij</span></div>
+
+<div class="viewcode-block" id="SobolVariance.runTestModel"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.runTestModel">[docs]</a>    <span class="k">def</span> <span class="nf">runTestModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">inputsmod</span><span class="p">,</span> <span class="n">repl</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Run a testmodel</span>
+<span class="sd">        </span>
+<span class="sd">        Use a testmodel to get familiar with the method and try things out. The</span>
+<span class="sd">        implemented methods are</span>
+<span class="sd">        * G Sobol function: testfunction with analytical solution </span>
+<span class="sd">        * gstarfunction: testfunction with analytical solution,</span>
+<span class="sd">        extended version of the G sobol function</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        model : string</span>
+<span class="sd">            name fo the testmodel</span>
+<span class="sd">        inputsmod : list</span>
+<span class="sd">            list with all the inputs of the model, except of the sampled stuff</span>
+<span class="sd">        repl : int</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        ------</span>
+<span class="sd">        More information on both testfunctions can be found in:</span>
+<span class="sd">            * G Sobol function [S2]_</span>
+<span class="sd">            * G* function [S1]_</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        
+        <span class="n">output</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">Ctorun</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;analgfunc&#39;</span><span class="p">:</span>
+            <span class="n">ai</span> <span class="o">=</span> <span class="n">inputsmod</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1">#run the model</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Ctorun</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                 <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">analgfunc</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">Ctorun</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">output2evaluate</span> <span class="o">=</span> <span class="n">output</span>
+<span class="c1">#            print output.shape</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">SobolVariancePost</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">repl</span> <span class="o">=</span> <span class="n">repl</span><span class="p">)</span>
+            
+            <span class="c1">#Analytical to compare -&gt; G</span>
+            <span class="n">Vi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+                <span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="n">ai</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+            
+            <span class="n">VTi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+                <span class="n">Vj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">Vi</span><span class="p">,</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="mf">1.</span><span class="p">)</span>
+                <span class="n">VTi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">Vj</span>
+            <span class="n">Vtot</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+                <span class="n">Vtot</span> <span class="o">=</span> <span class="n">Vtot</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">Vtot</span> <span class="o">=</span> <span class="n">Vtot</span> <span class="o">-</span><span class="mf">1.</span>
+            
+            <span class="n">MAESi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">repl</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">repl</span><span class="p">):</span>
+                <span class="n">MAESi</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Vi</span><span class="o">/</span><span class="n">Vtot</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="p">[</span><span class="n">j</span><span class="p">,:]))</span>
+            
+            <span class="n">MAESTi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">repl</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">repl</span><span class="p">):</span>
+                <span class="n">MAESTi</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">VTi</span><span class="o">/</span><span class="n">Vtot</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="p">[</span><span class="n">j</span><span class="p">,:]))</span>  
+
+            <span class="k">print</span> <span class="s1">&#39;Analytical Solution for Si: </span><span class="se">\n</span><span class="s1">&#39;</span>                
+            <span class="k">print</span> <span class="n">Vi</span><span class="o">/</span><span class="n">Vtot</span>
+            <span class="k">print</span> <span class="s1">&#39;Sobol solution for Si: </span><span class="se">\n</span><span class="s1">&#39;</span>            
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">Si</span>
+            <span class="k">print</span> <span class="s1">&#39;Mean Absolute Error of Si is:&#39;</span><span class="p">,</span> <span class="n">MAESi</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="k">print</span> <span class="s1">&#39; </span><span class="se">\n</span><span class="s1"> Anaytical Solution for STi:&#39;</span>            
+            <span class="k">print</span> <span class="n">VTi</span><span class="o">/</span><span class="n">Vtot</span>
+            <span class="k">print</span> <span class="s1">&#39;Sobol solution for STi: </span><span class="se">\n</span><span class="s1">&#39;</span>            
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">STi</span>
+            <span class="k">print</span> <span class="s1">&#39;Mean Absolute Error of STi is:&#39;</span><span class="p">,</span> <span class="n">MAESTi</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="k">print</span> <span class="s1">&#39;Sobol solution for STij: </span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">STij</span>
+        
+        <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;analgstarfunc&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">repl</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s1">&#39;Caution: replicates not supported on MAE calculation, results not represent&#39;</span>
+            <span class="n">ai</span> <span class="o">=</span> <span class="n">inputsmod</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">alphai</span> <span class="o">=</span> <span class="n">inputsmod</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">di</span> <span class="o">=</span> <span class="n">inputsmod</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Ctorun</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">output</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">analgstarfunc</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="n">alphai</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ctorun</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="n">di</span><span class="p">)</span>
+            
+            <span class="c1">#run post-stuff</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">SobolVariancePost</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">repl</span> <span class="o">=</span> <span class="n">repl</span><span class="p">)</span>
+            
+            <span class="c1">###Analytical to compare -&gt; G*</span>
+            <span class="n">Vi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+                <span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">alphai</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">**</span><span class="mf">2.</span><span class="o">/</span><span class="p">((</span><span class="mf">1.</span><span class="o">+</span><span class="mf">2.</span><span class="o">*</span><span class="n">alphai</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="n">ai</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">**</span><span class="mf">2.</span><span class="p">)</span>
+            
+            <span class="n">Vtot</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ai</span><span class="p">)):</span>
+                <span class="n">Vtot</span> <span class="o">=</span> <span class="n">Vtot</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">Vi</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">Vtot</span> <span class="o">=</span> <span class="n">Vtot</span> <span class="o">-</span><span class="mf">1.</span>
+            
+            <span class="k">print</span> <span class="s1">&#39;Anaytical Solution for Si:&#39;</span>
+            <span class="k">print</span> <span class="n">Vi</span><span class="o">/</span><span class="n">Vtot</span>
+            <span class="k">print</span> <span class="s1">&#39;Sobol solution for Si:&#39;</span>
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">Si</span>
+            <span class="k">print</span> <span class="s1">&#39;Mean Absolute Error for Si is:&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Vi</span><span class="o">/</span><span class="n">Vtot</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="p">))</span>
+        
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Use analgfunc or analgstarfunc&#39;</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="SobolVariance.latexresults"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.latexresults">[docs]</a>    <span class="k">def</span> <span class="nf">latexresults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Soboltable.tex&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Print Results in a &quot;deluxetable&quot; Latex</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        name : str.tex</span>
+<span class="sd">            output file name; use .tex extension in the name</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;Table generates only output of first line!&#39;</span>
+            
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">justs</span><span class="o">=</span><span class="s1">&#39;lcc&#39;</span><span class="p">,</span> <span class="n">caption</span><span class="o">=</span><span class="s1">&#39;First order and Total sensitivity index&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;tab:sobol1tot&quot;</span><span class="p">)</span>
+
+        <span class="n">t</span><span class="o">.</span><span class="n">add_header_row</span><span class="p">([</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;$S_i$&#39;</span><span class="p">,</span> <span class="s1">&#39;$S_{Ti}$&#39;</span><span class="p">])</span>
+        <span class="n">col1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">[:]</span>
+        <span class="n">col2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">col3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">col1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;SUM&#39;</span><span class="p">)</span>
+        <span class="n">col2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">col3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        
+        <span class="n">t</span><span class="o">.</span><span class="n">add_data</span><span class="p">([</span><span class="n">col1</span><span class="p">,</span><span class="n">col2</span><span class="p">,</span><span class="n">col3</span><span class="p">],</span> <span class="n">sigfigs</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1">#,col3</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">print_table</span><span class="p">(</span><span class="n">fout</span><span class="p">)</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s1">&#39;Results latex table file saved in directory </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>        </div>
+
+
+<div class="viewcode-block" id="SobolVariance.txtresults"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.txtresults">[docs]</a>    <span class="k">def</span> <span class="nf">txtresults</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Sobolresults.txt&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Results in txt file to load in eg excel</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        name : str.txt</span>
+<span class="sd">            output file name; use .txt extension in the name </span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;Table generates only output of first line!&#39;</span>
+            
+        <span class="n">fout</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Par </span><span class="se">\t</span><span class="s1"> Si </span><span class="se">\t</span><span class="s1"> STi </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>
+            <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="se">\t</span><span class="s1"> </span><span class="si">%.8f</span><span class="s1"> </span><span class="se">\t</span><span class="s1">  </span><span class="si">%.8f</span><span class="s1"> </span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parmap</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">],</span> 
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]))</span>
+        <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;SUM </span><span class="se">\t</span><span class="s1"> </span><span class="si">%.8f</span><span class="s1"> </span><span class="se">\t</span><span class="s1">  </span><span class="si">%.8f</span><span class="s1"> </span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> 
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="o">.</span><span class="n">sum</span><span class="p">()))</span>                                              
+        <span class="n">fout</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        <span class="k">print</span> <span class="s1">&#39;Results file saved in directory </span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SobolVariance.plotSi"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.plotSi">[docs]</a>    <span class="k">def</span> <span class="nf">plotSi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">addval</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> 
+               <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot a barchart of the given Si</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        width : float (0-1)</span>
+<span class="sd">            width of the bars in the barchart</span>
+<span class="sd">        addval : bool</span>
+<span class="sd">            if True, the morris mu values are added to the graph</span>
+<span class="sd">        sortit : bool</span>
+<span class="sd">            if True, larger values (in absolute value) are plotted closest to</span>
+<span class="sd">            the y-axis      </span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            passed to the matplotlib.bar </span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;Table generates only output of first line!&#39;</span>
+            
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span> 
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Si</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span> 
+                      <span class="n">addval</span> <span class="o">=</span> <span class="n">addval</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">r&#39;$S_i$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>  
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span></div>
+          
+        
+<div class="viewcode-block" id="SobolVariance.plotSTi"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.plotSTi">[docs]</a>    <span class="k">def</span> <span class="nf">plotSTi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">addval</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot a barchart of the given STi</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        width : float (0-1)</span>
+<span class="sd">            width of the bars in the barchart</span>
+<span class="sd">        addval : bool</span>
+<span class="sd">            if True, the morris mu values are added to the graph</span>
+<span class="sd">        sortit : bool</span>
+<span class="sd">            if True, larger values (in absolute value) are plotted closest to</span>
+<span class="sd">            the y-axis      </span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            passed to the matplotlib.bar </span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repl</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;Table generates only output of first line!&#39;</span>
+            
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span> 
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax1</span> <span class="o">=</span> <span class="n">plotbar</span><span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">STi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">,</span> 
+                      <span class="n">addval</span> <span class="o">=</span> <span class="n">addval</span><span class="p">,</span> <span class="n">sortit</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">r&#39;$S_Ti$&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="s1">&#39;horizontal&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>        
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span>      </div>
+
+<div class="viewcode-block" id="SobolVariance.plotSTij"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.plotSTij">[docs]</a>    <span class="k">def</span> <span class="nf">plotSTij</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">linewidth</span> <span class="o">=</span> <span class="mf">2.</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot the STij interactive terms </span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        linewidth : float</span>
+<span class="sd">            width of the black lines of the grid        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="n">fig</span><span class="p">,</span><span class="n">ax1</span>  <span class="o">=</span> <span class="n">interactionplot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">STij</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> <span class="n">lwidth</span> <span class="o">=</span> <span class="n">linewidth</span><span class="p">)</span>
+        <span class="c1">#add text</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="mf">0.9</span><span class="p">,</span><span class="s1">r&#39;$ST_{ij}$&#39;</span><span class="p">,</span> <span class="n">transform</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> 
+                 <span class="n">verticalalignment</span> <span class="o">=</span> <span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="n">horizontalalignment</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span><span class="p">)</span> 
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax1</span></div>
+    
+<div class="viewcode-block" id="SobolVariance.sens_evolution"><a class="viewcode-back" href="../../sensitivity.html#pystran.SobolVariance.sens_evolution">[docs]</a>    <span class="k">def</span> <span class="nf">sens_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">repl</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">labell</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.07</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Check the convergence of the current sequence</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        output : optional</span>
+<span class="sd">            if True; this output is used, elsewhere the generated output</span>
+<span class="sd">        repl : int</span>
+<span class="sd">            must be 1 to work</span>
+<span class="sd">        labell : float</span>
+<span class="sd">            aligns the ylabels</span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            passed to the matplotlib.plot function        </span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        ---------</span>
+<span class="sd">        Si_evol : ndarray</span>
+<span class="sd">            Si of the factors in number of nbaseruns</span>
+<span class="sd">        </span>
+<span class="sd">        STi_evol : ndarray</span>
+<span class="sd">            STi of the factors in number of nbaseruns                      </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">repl</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Not supported for replicates!&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">output</span> <span class="o">&lt;&gt;</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;alternative output...&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output2evaluate</span> <span class="o">=</span> <span class="n">output</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output2evaluate</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">_outputbk</span>
+        
+        <span class="n">Si_evol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">,))</span>
+        <span class="n">STi_evol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span><span class="p">):</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output2evaluate</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output2evaluate</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span>          
+            <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ndim</span><span class="p">):</span>    
+                <span class="n">nC</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output2evaluate</span><span class="p">[(</span><span class="mi">2</span><span class="o">+</span><span class="n">j</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="o">+</span><span class="n">j</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nbaseruns</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span>
+                <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">C</span><span class="p">,</span><span class="n">nC</span><span class="p">))</span>
+            <span class="n">Si</span><span class="p">,</span><span class="n">STi</span><span class="p">,</span><span class="n">STij</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SobolVariancePost</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">repl</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">adaptedbaserun</span> <span class="o">=</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">Si_evol</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">Si</span>
+            <span class="n">STi_evol</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">STi</span>  
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">Si_evol</span> <span class="o">=</span> <span class="n">Si_evol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">STi_evol</span> <span class="o">=</span> <span class="n">STi_evol</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plot_evolution</span><span class="p">(</span><span class="n">labell</span> <span class="o">=</span> <span class="n">labell</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="n">Si_evol</span><span class="p">,</span> <span class="n">STi_evol</span></div>
+
+    <span class="k">def</span> <span class="nf">_plot_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labell</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.06</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Plot the convergence of the different factors;</span>
+<span class="sd">        help function</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ------------</span>
+<span class="sd">        labell : float</span>
+<span class="sd">            aligns the ylabels</span>
+<span class="sd">        *args, **kwargs : args</span>
+<span class="sd">            used in plot function</span>
+<span class="sd">        </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fig1</span><span class="p">,</span> <span class="n">axes1</span> <span class="o">=</span> <span class="n">plot_evolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Si_evol</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> 
+                                     <span class="n">labell</span> <span class="o">=</span> <span class="n">labell</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>           
+        <span class="n">axes1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">r&#39;$S_i$&#39;</span><span class="p">)</span>
+        <span class="n">fig2</span><span class="p">,</span> <span class="n">axes2</span> <span class="o">=</span> <span class="n">plot_evolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">STi_evol</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_namelist</span><span class="p">,</span> 
+                                     <span class="n">labell</span> <span class="o">=</span> <span class="n">labell</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>        
+        <span class="n">axes2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">r&#39;$S_{Ti}$&#39;</span><span class="p">)</span>  
+        <span class="k">return</span> <span class="n">fig1</span><span class="p">,</span> <span class="n">axes1</span><span class="p">,</span> <span class="n">fig2</span><span class="p">,</span> <span class="n">axes2</span></div>
+                    
+
+
+                    
+<span class="c1"># Xi = [(0.0,1.0,&#39;par1&#39;),(0.0,1.0,&#39;par2&#39;),(0.0,1.0,&#39;par3&#39;),(0.0,1.0,&#39;par4&#39;),</span>
+      <span class="c1"># (0.0,1.0,&#39;par5&#39;),(0.0,1.0,&#39;par6&#39;),(0.0,1.0,&#39;par7&#39;),(0.0,1.0,&#39;par8&#39;),]</span>
+      
+<span class="c1"># ai=[0, 1, 4.5, 9, 99, 99, 99, 99]</span>
+<span class="c1"># sens1 = SobolVariance(Xi, ModelType = &#39;testmodel&#39;)</span>
+<span class="c1"># sens1.SobolVariancePre(10000)</span>
+<span class="c1"># sens1.runTestModel(&#39;analgfunc&#39;, [ai])</span>
+
+<span class="c1">## Example 2</span>
+<span class="c1">##############</span>
+<span class="c1">#ai=[0, 1, 4.5, 9, 99, 99, 99, 99]</span>
+<span class="c1">#alphai = 0.5 * np.ones(len(ai))</span>
+<span class="c1">##Xi = [(0.0,1.0,&#39;par1&#39;),(0.0,1.0,&#39;par2&#39;),(0.0,1.0,&#39;par3&#39;),(0.0,1.0,&#39;par4&#39;),</span>
+<span class="c1">##      (0.0,1.0,&#39;par5&#39;),(0.0,1.0,&#39;par6&#39;),(0.0,1.0,&#39;par7&#39;),(0.0,1.0,&#39;par8&#39;),]</span>
+<span class="c1">#Xi = [(0.0,1.0,r&#39;$X_1$&#39;),(0.0,1.0,r&#39;$X_2$&#39;),(0.0,1.0,r&#39;$X_3$&#39;),(0.0,1.0,r&#39;$X_4$&#39;),</span>
+<span class="c1">#      (0.0,1.0,r&#39;$X_5$&#39;),(0.0,1.0,r&#39;$X_6$&#39;),(0.0,1.0,r&#39;$X_7$&#39;),(0.0,1.0,r&#39;$X_8$&#39;)]      </span>
+<span class="c1">#di=np.random.random(8)</span>
+<span class="c1">##set up sensitivity analysis</span>
+<span class="c1">#sens2 = SobolVariance(Xi, ModelType = &#39;testmodel&#39;)</span>
+<span class="c1">##Sampling strategy</span>
+<span class="c1">#sens2.SobolVariancePre(1500)</span>
+<span class="c1">##Run model</span>
+<span class="c1">#sens2.runTestModel(&#39;analgfunc&#39;, [ai, alphai, di]) #here normally other model</span>
+<span class="c1">##results in txt file </span>
+<span class="c1">#sens2.txtresults(name=&#39;SobolTestOut.txt&#39;)</span>
+<span class="c1">##results in tex-table </span>
+<span class="c1">#sens2.latexresults(name=&#39;SobolTestOut.tex&#39;)</span>
+<span class="c1">##Plots</span>
+<span class="c1">#sens2.plotSi(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="c1">#sens2.plotSTi(ec=&#39;grey&#39;,fc=&#39;grey&#39;)</span>
+<span class="c1">#sens2.plotSTij()</span>
+<span class="c1">#Si_evol, STi_evol = sens2.sens_evolution(color=&#39;k&#39;)</span>
+
+
+
+   
+        
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pystran 0.1.3 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, S. Van Hoey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.
+    </div>
+  </body>
+</html>
