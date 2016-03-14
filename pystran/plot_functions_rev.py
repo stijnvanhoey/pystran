@@ -28,24 +28,6 @@ from mpl_toolkits.axes_grid import make_axes_locatable
 
 #p.rc('mathtext', default='regular')
 
-'''
-#TO ADD:
-    * no date timeserie of observed/modelled
-    * QQ-plot measured modelled -> OK!
-    *
-#Analysis output to add:
-    *optimization:
-        * convergence plot of the algorithm
-        * contour if al known for 2par: OK!
-        * de bovenstaande
-    *sensitivity:
-        * Morris velden, Morris van de paper, Morris voorbereiding-stuff
-        * Sobol-stuff!!
-        * GLUE plots => herwerken!! + vanuit GLUE klasse aanroepen
-    * uncertainty:
-        *unc-plot => zie GLUE stuff
-'''
-
 def _logplot(flowserie, ax = None):
     """
     """
