@@ -1,8 +1,8 @@
-Evaluation Criteria
+Performance metrics
 =====================
 
-Objective functions
--------------------------
+Typical Objective functions
+----------------------------
 
 .. autoclass:: pystran.Evaluation
 	:members:
