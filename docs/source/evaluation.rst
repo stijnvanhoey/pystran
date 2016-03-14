@@ -1,7 +1,7 @@
 Evaluation Criteria
 =====================
 
-Objective functions
+Performance metrics
 -------------------------
 
 .. autoclass:: pystran.Evaluation
