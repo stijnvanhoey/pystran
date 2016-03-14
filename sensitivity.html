@@ -1,0 +1,580 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Sensitivity Analysis &mdash; pystran 0.1.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="pystran 0.1.3 documentation" href="index.html" />
+    <link rel="prev" title="Model Parameters" href="parameter.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="parameter.html" title="Model Parameters"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pystran 0.1.3 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sensitivity-analysis">
+<h1>Sensitivity Analysis<a class="headerlink" href="#sensitivity-analysis" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sensitivity-base-class">
+<h2>Sensitivity Base class<a class="headerlink" href="#sensitivity-base-class" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="interaction-with-models">
+<h3>Interaction with models<a class="headerlink" href="#interaction-with-models" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="morris-screening-method">
+<h2>Morris Screening method<a class="headerlink" href="#morris-screening-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-morris-screening-methods">
+<h3>Main Morris screening methods<a class="headerlink" href="#main-morris-screening-methods" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="testing-the-selected-traject-optimization">
+<h3>Testing the selected traject optimization<a class="headerlink" href="#testing-the-selected-traject-optimization" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_Morris_oldsampl.png"><img alt="_images/ex_Morris_oldsampl.png" src="_images/ex_Morris_oldsampl.png" style="width: 400.0px; height: 300.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_Morris_optsampl.png"><img alt="_images/ex_Morris_optsampl.png" src="_images/ex_Morris_optsampl.png" style="width: 400.0px; height: 300.0px;" /></a>
+</div>
+<div class="section" id="output-plots-and-exports">
+<h3>Output plots and exports<a class="headerlink" href="#output-plots-and-exports" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_morris_mu.png"><img alt="_images/ex_morris_mu.png" src="_images/ex_morris_mu.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_morris_mustar.png"><img alt="_images/ex_morris_mustar.png" src="_images/ex_morris_mustar.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_morris_sigma.png"><img alt="_images/ex_morris_sigma.png" src="_images/ex_morris_sigma.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_plotmustarsigma.png"><img alt="_images/ex_plotmustarsigma.png" src="_images/ex_plotmustarsigma.png" style="width: 600.0px; height: 450.0px;" /></a>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lccc}
+\tablewidth{0pc}
+\tablecolumns{4}
+\caption{Morris evaluation criteria\label{tab:morris1tot}}
+\tablehead{
+  &amp; $\mu$ &amp; $\mu^*$ &amp; $\sigma$  }
+\startdata
+$X_1$ &amp; 0.019 &amp; 0.053 &amp; 0.062\\
+$X_2$ &amp; -0.014 &amp; 0.28 &amp; 0.37\\
+$X_3$ &amp; 0.35 &amp; 1.8 &amp; 2.2\\
+$X_4$ &amp; 0.58 &amp; 0.77 &amp; 0.66\\
+$X_5$ &amp; -0.0091 &amp; 0.029 &amp; 0.035\\
+$X_6$ &amp; 0.023 &amp; 0.088 &amp; 0.11\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      mu      mustar          sigma
+$X_1$    0.01923737       0.05295802      0.06235872
+$X_2$    -0.01423402      0.27864841      0.36502709
+$X_3$    0.35127671       1.79863549      2.19419533
+$X_4$    0.57758340       0.76929478      0.66397173
+$X_5$    -0.00912314      0.02933937      0.03503700
+$X_6$    0.02319802       0.08834758      0.10503778
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="standardized-regression-coefficients-src-method">
+<h2>Standardized Regression Coefficients (SRC) method<a class="headerlink" href="#standardized-regression-coefficients-src-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-src-methods">
+<h3>Main SRC methods<a class="headerlink" href="#main-src-methods" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="quick-analysis-of-the-scatter-plots-of-the-ouput-versus-the-parameter-values">
+<h3>Quick analysis of the scatter plots of the ouput versus the parameter values<a class="headerlink" href="#quick-analysis-of-the-scatter-plots-of-the-ouput-versus-the-parameter-values" title="Permalink to this headline">¶</a></h3>
+<p>Output image:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_scatter.png"><img alt="_images/ex_SRC_scatter.png" src="_images/ex_SRC_scatter.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div></blockquote>
+</div>
+<div class="section" id="id1">
+<h3>Output plots and exports<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Output image:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_tornado.png"><img alt="_images/ex_SRC_tornado.png" src="_images/ex_SRC_tornado.png" style="width: 500.0px; height: 300.0px;" /></a>
+</div></blockquote>
+<p>Output image if a single output is selected:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_single.png"><img alt="_images/ex_SRC_single.png" src="_images/ex_SRC_single.png" style="width: 400.0px; height: 300.0px;" /></a>
+</div></blockquote>
+<p>Output image if a all outputs are selected:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_all.png"><img alt="_images/ex_SRC_all.png" src="_images/ex_SRC_all.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lccccc}
+\tablewidth{0pc}
+\tablecolumns{6}
+\caption{Global SRC parameter ranking\label{tab:SRCresult}}
+\tablehead{
+ &amp; o1 &amp; o2 &amp; o3 &amp; o4 &amp; o5  }
+\startdata
+$X_1$ &amp; 5 &amp; 5 &amp; 5 &amp; 5 &amp; 5\\
+$X_2$ &amp; 4 &amp; 4 &amp; 4 &amp; 4 &amp; 4\\
+$X_3$ &amp; 3 &amp; 3 &amp; 3 &amp; 3 &amp; 3\\
+$X_4$ &amp; 2 &amp; 2 &amp; 2 &amp; 2 &amp; 2\\
+$X_5$ &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1\\
+$X_6$ &amp; 6 &amp; 6 &amp; 6 &amp; 6 &amp; 6\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      o1      o2      o3      o4      o5
+$X_1$    0.0778505546741         0.0778505546741         0.0778505546741         0.0778505546741         0.0778505546741
+$X_2$    0.233670804823  0.233670804823  0.233670804823  0.233670804823  0.233670804823
+$X_3$    -0.6    0.389115599046  0.389115599046  0.389115599046  0.389115599046
+$X_4$    0.544743494911  0.544743494911  0.544743494911  0.544743494911  0.544743494911
+$X_5$    0.700482475678  0.700482475678  0.700482475678  0.700482475678  0.700482475678
+$X_6$    0.0778270555871         0.0778270555871         0.0778270555871         0.0778270555871         0.0778270555871
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="sobol-variance-based-method">
+<h2>Sobol Variance based method<a class="headerlink" href="#sobol-variance-based-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-sobol-variance-methods">
+<h3>Main Sobol variance methods<a class="headerlink" href="#main-sobol-variance-methods" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="check-the-convergence-of-the-analysis">
+<h3>Check the convergence of the analysis<a class="headerlink" href="#check-the-convergence-of-the-analysis" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_sobol_evSi.png"><img alt="_images/ex_sobol_evSi.png" src="_images/ex_sobol_evSi.png" style="width: 700.0px; height: 405.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_sobol_evSTi.png"><img alt="_images/ex_sobol_evSTi.png" src="_images/ex_sobol_evSTi.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div>
+<div class="section" id="id2">
+<h3>Output plots and exports<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_sobol_STij.png"><img alt="_images/ex_sobol_STij.png" src="_images/ex_sobol_STij.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_sobol_STi.png"><img alt="_images/ex_sobol_STi.png" src="_images/ex_sobol_STi.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_sobol_Si.png"><img alt="_images/ex_sobol_Si.png" src="_images/ex_sobol_Si.png" style="width: 600.0px; height: 450.0px;" /></a>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lcc}
+\tablewidth{0pc}
+\tablecolumns{3}
+\caption{First order and Total sensitivity index\label{tab:sobol1tot}}
+\tablehead{
+  &amp; $S_i$ &amp; $S_{Ti}$  }
+\startdata
+par1 &amp; 0.72 &amp; 0.79\\
+par2 &amp; 0.18 &amp; 0.24\\
+par3 &amp; 0.023 &amp; 0.034\\
+par4 &amp; 0.0072 &amp; 0.010\\
+par5 &amp; 0.000044 &amp; 0.00011\\
+par6 &amp; 0.000068 &amp; 0.00011\\
+par7 &amp; 0.000028 &amp; 0.00010\\
+par8 &amp; 0.000049 &amp; 0.00011\\
+SUM &amp; 0.93 &amp; 1.1\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      Si      STi
+par1     0.71602494       0.78797717
+par2     0.17916175       0.24331297
+par3     0.02346677       0.03437614
+par4     0.00720168       0.01044238
+par5     0.00004373       0.00010526
+par6     0.00006803       0.00010556
+par7     0.00002847       0.00010479
+par8     0.00004918       0.00010522
+SUM      0.92604455       1.07652948
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="latin-hypercube-oat-method">
+<h2>Latin-Hypercube OAT method<a class="headerlink" href="#latin-hypercube-oat-method" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="main-global-oat-methods">
+<h3>Main GLobal OAT methods<a class="headerlink" href="#main-global-oat-methods" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id3">
+<h3>Output plots and exports<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_globaloat_CTRS.png"><img alt="_images/ex_globaloat_CTRS.png" src="_images/ex_globaloat_CTRS.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_globaloat_PE.png"><img alt="_images/ex_globaloat_PE.png" src="_images/ex_globaloat_PE.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_globaloat_sensmatrix.png"><img alt="_images/ex_globaloat_sensmatrix.png" src="_images/ex_globaloat_sensmatrix.png" style="width: 600.0px; height: 450.0px;" /></a>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lccccccccccc}
+\tablewidth{0pc}
+\tablecolumns{12}
+\caption{Global OAT parameter ranking\label{tab:globaloatrank}}
+\tablehead{
+ &amp; o1 &amp; o2 &amp; o3 &amp; o4 &amp; o5 &amp; o6 &amp; o7 &amp; o8 &amp; o9 &amp; o10 &amp; o11  }
+\startdata
+$X_1$ &amp; 4 &amp; 4 &amp; 2 &amp; 3 &amp; 3 &amp; 3 &amp; 2 &amp; 3 &amp; 4 &amp; 4 &amp; 3\\
+$X_2$ &amp; 3 &amp; 1 &amp; 3 &amp; 4 &amp; 4 &amp; 1 &amp; 3 &amp; 2 &amp; 1 &amp; 3 &amp; 2\\
+$X_3$ &amp; 1 &amp; 6 &amp; 4 &amp; 6 &amp; 2 &amp; 4 &amp; 5 &amp; 4 &amp; 2 &amp; 1 &amp; 4\\
+$X_4$ &amp; 2 &amp; 2 &amp; 6 &amp; 5 &amp; 6 &amp; 6 &amp; 4 &amp; 6 &amp; 3 &amp; 5 &amp; 1\\
+$X_5$ &amp; 6 &amp; 5 &amp; 5 &amp; 1 &amp; 5 &amp; 2 &amp; 6 &amp; 1 &amp; 6 &amp; 6 &amp; 6\\
+$X_6$ &amp; 5 &amp; 3 &amp; 1 &amp; 2 &amp; 1 &amp; 5 &amp; 1 &amp; 5 &amp; 5 &amp; 2 &amp; 5\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      o1      o2      o3      o4      o5      o6      o7      o8      o9      o10     o11
+$X_1$    4       4       2       3       3       3       2       3       4       4       3
+$X_2$    3       1       3       4       4       1       3       2       1       3       2
+$X_3$    1       6       4       6       2       4       5       4       2       1       4
+$X_4$    2       2       6       5       6       6       4       6       3       5       1
+$X_5$    6       5       5       1       5       2       6       1       6       6       6
+$X_6$    5       3       1       2       1       5       1       5       5       2       5
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="dynamic-identifiability-analysis-dynia">
+<h2>Dynamic Identifiability Analysis (DYNIA)<a class="headerlink" href="#dynamic-identifiability-analysis-dynia" title="Permalink to this headline">¶</a></h2>
+<p>added soon</p>
+</div>
+<div class="section" id="regional-sensitivity-analysis-rsa">
+<h2>Regional Sensitivity Analysis (RSA)<a class="headerlink" href="#regional-sensitivity-analysis-rsa" title="Permalink to this headline">¶</a></h2>
+<p>added soon</p>
+</div>
+<div class="section" id="id4">
+<h2>Sensitivity Base class<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h3>Interaction with models<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>Morris Screening method<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id7">
+<h3>Main Morris screening methods<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id8">
+<h3>Testing the selected traject optimization<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_Morris_oldsampl.png"><img alt="_images/ex_Morris_oldsampl.png" src="_images/ex_Morris_oldsampl.png" style="width: 400.0px; height: 300.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_Morris_optsampl.png"><img alt="_images/ex_Morris_optsampl.png" src="_images/ex_Morris_optsampl.png" style="width: 400.0px; height: 300.0px;" /></a>
+</div>
+<div class="section" id="id9">
+<h3>Output plots and exports<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_morris_mu.png"><img alt="_images/ex_morris_mu.png" src="_images/ex_morris_mu.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_morris_mustar.png"><img alt="_images/ex_morris_mustar.png" src="_images/ex_morris_mustar.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_morris_sigma.png"><img alt="_images/ex_morris_sigma.png" src="_images/ex_morris_sigma.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_plotmustarsigma.png"><img alt="_images/ex_plotmustarsigma.png" src="_images/ex_plotmustarsigma.png" style="width: 600.0px; height: 450.0px;" /></a>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lccc}
+\tablewidth{0pc}
+\tablecolumns{4}
+\caption{Morris evaluation criteria\label{tab:morris1tot}}
+\tablehead{
+  &amp; $\mu$ &amp; $\mu^*$ &amp; $\sigma$  }
+\startdata
+$X_1$ &amp; 0.019 &amp; 0.053 &amp; 0.062\\
+$X_2$ &amp; -0.014 &amp; 0.28 &amp; 0.37\\
+$X_3$ &amp; 0.35 &amp; 1.8 &amp; 2.2\\
+$X_4$ &amp; 0.58 &amp; 0.77 &amp; 0.66\\
+$X_5$ &amp; -0.0091 &amp; 0.029 &amp; 0.035\\
+$X_6$ &amp; 0.023 &amp; 0.088 &amp; 0.11\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      mu      mustar          sigma
+$X_1$    0.01923737       0.05295802      0.06235872
+$X_2$    -0.01423402      0.27864841      0.36502709
+$X_3$    0.35127671       1.79863549      2.19419533
+$X_4$    0.57758340       0.76929478      0.66397173
+$X_5$    -0.00912314      0.02933937      0.03503700
+$X_6$    0.02319802       0.08834758      0.10503778
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id10">
+<h2>Standardized Regression Coefficients (SRC) method<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id11">
+<h3>Main SRC methods<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id12">
+<h3>Quick analysis of the scatter plots of the ouput versus the parameter values<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<p>Output image:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_scatter.png"><img alt="_images/ex_SRC_scatter.png" src="_images/ex_SRC_scatter.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div></blockquote>
+</div>
+<div class="section" id="id13">
+<h3>Output plots and exports<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<p>Output image:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_tornado.png"><img alt="_images/ex_SRC_tornado.png" src="_images/ex_SRC_tornado.png" style="width: 500.0px; height: 300.0px;" /></a>
+</div></blockquote>
+<p>Output image if a single output is selected:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_single.png"><img alt="_images/ex_SRC_single.png" src="_images/ex_SRC_single.png" style="width: 400.0px; height: 300.0px;" /></a>
+</div></blockquote>
+<p>Output image if a all outputs are selected:</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="_images/ex_SRC_all.png"><img alt="_images/ex_SRC_all.png" src="_images/ex_SRC_all.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lccccc}
+\tablewidth{0pc}
+\tablecolumns{6}
+\caption{Global SRC parameter ranking\label{tab:SRCresult}}
+\tablehead{
+ &amp; o1 &amp; o2 &amp; o3 &amp; o4 &amp; o5  }
+\startdata
+$X_1$ &amp; 5 &amp; 5 &amp; 5 &amp; 5 &amp; 5\\
+$X_2$ &amp; 4 &amp; 4 &amp; 4 &amp; 4 &amp; 4\\
+$X_3$ &amp; 3 &amp; 3 &amp; 3 &amp; 3 &amp; 3\\
+$X_4$ &amp; 2 &amp; 2 &amp; 2 &amp; 2 &amp; 2\\
+$X_5$ &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1\\
+$X_6$ &amp; 6 &amp; 6 &amp; 6 &amp; 6 &amp; 6\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      o1      o2      o3      o4      o5
+$X_1$    0.0778505546741         0.0778505546741         0.0778505546741         0.0778505546741         0.0778505546741
+$X_2$    0.233670804823  0.233670804823  0.233670804823  0.233670804823  0.233670804823
+$X_3$    -0.6    0.389115599046  0.389115599046  0.389115599046  0.389115599046
+$X_4$    0.544743494911  0.544743494911  0.544743494911  0.544743494911  0.544743494911
+$X_5$    0.700482475678  0.700482475678  0.700482475678  0.700482475678  0.700482475678
+$X_6$    0.0778270555871         0.0778270555871         0.0778270555871         0.0778270555871         0.0778270555871
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id14">
+<h2>Sobol Variance based method<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id15">
+<h3>Main Sobol variance methods<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id16">
+<h3>Check the convergence of the analysis<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_sobol_evSi.png"><img alt="_images/ex_sobol_evSi.png" src="_images/ex_sobol_evSi.png" style="width: 700.0px; height: 405.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_sobol_evSTi.png"><img alt="_images/ex_sobol_evSTi.png" src="_images/ex_sobol_evSTi.png" style="width: 700.0px; height: 405.0px;" /></a>
+</div>
+<div class="section" id="id17">
+<h3>Output plots and exports<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_sobol_STij.png"><img alt="_images/ex_sobol_STij.png" src="_images/ex_sobol_STij.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_sobol_STi.png"><img alt="_images/ex_sobol_STi.png" src="_images/ex_sobol_STi.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_sobol_Si.png"><img alt="_images/ex_sobol_Si.png" src="_images/ex_sobol_Si.png" style="width: 600.0px; height: 450.0px;" /></a>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lcc}
+\tablewidth{0pc}
+\tablecolumns{3}
+\caption{First order and Total sensitivity index\label{tab:sobol1tot}}
+\tablehead{
+  &amp; $S_i$ &amp; $S_{Ti}$  }
+\startdata
+par1 &amp; 0.72 &amp; 0.79\\
+par2 &amp; 0.18 &amp; 0.24\\
+par3 &amp; 0.023 &amp; 0.034\\
+par4 &amp; 0.0072 &amp; 0.010\\
+par5 &amp; 0.000044 &amp; 0.00011\\
+par6 &amp; 0.000068 &amp; 0.00011\\
+par7 &amp; 0.000028 &amp; 0.00010\\
+par8 &amp; 0.000049 &amp; 0.00011\\
+SUM &amp; 0.93 &amp; 1.1\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      Si      STi
+par1     0.71602494       0.78797717
+par2     0.17916175       0.24331297
+par3     0.02346677       0.03437614
+par4     0.00720168       0.01044238
+par5     0.00004373       0.00010526
+par6     0.00006803       0.00010556
+par7     0.00002847       0.00010479
+par8     0.00004918       0.00010522
+SUM      0.92604455       1.07652948
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id18">
+<h2>Latin-Hypercube OAT method<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id19">
+<h3>Main GLobal OAT methods<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id20">
+<h3>Output plots and exports<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<a class="reference internal image-reference" href="_images/ex_globaloat_CTRS.png"><img alt="_images/ex_globaloat_CTRS.png" src="_images/ex_globaloat_CTRS.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_globaloat_PE.png"><img alt="_images/ex_globaloat_PE.png" src="_images/ex_globaloat_PE.png" style="width: 600.0px; height: 450.0px;" /></a>
+<a class="reference internal image-reference" href="_images/ex_globaloat_sensmatrix.png"><img alt="_images/ex_globaloat_sensmatrix.png" src="_images/ex_globaloat_sensmatrix.png" style="width: 600.0px; height: 450.0px;" /></a>
+<div class="highlight-python"><div class="highlight"><pre>\begin{table}{lccccccccccc}
+\tablewidth{0pc}
+\tablecolumns{12}
+\caption{Global OAT parameter ranking\label{tab:globaloatrank}}
+\tablehead{
+ &amp; o1 &amp; o2 &amp; o3 &amp; o4 &amp; o5 &amp; o6 &amp; o7 &amp; o8 &amp; o9 &amp; o10 &amp; o11  }
+\startdata
+$X_1$ &amp; 4 &amp; 4 &amp; 2 &amp; 3 &amp; 3 &amp; 3 &amp; 2 &amp; 3 &amp; 4 &amp; 4 &amp; 3\\
+$X_2$ &amp; 3 &amp; 1 &amp; 3 &amp; 4 &amp; 4 &amp; 1 &amp; 3 &amp; 2 &amp; 1 &amp; 3 &amp; 2\\
+$X_3$ &amp; 1 &amp; 6 &amp; 4 &amp; 6 &amp; 2 &amp; 4 &amp; 5 &amp; 4 &amp; 2 &amp; 1 &amp; 4\\
+$X_4$ &amp; 2 &amp; 2 &amp; 6 &amp; 5 &amp; 6 &amp; 6 &amp; 4 &amp; 6 &amp; 3 &amp; 5 &amp; 1\\
+$X_5$ &amp; 6 &amp; 5 &amp; 5 &amp; 1 &amp; 5 &amp; 2 &amp; 6 &amp; 1 &amp; 6 &amp; 6 &amp; 6\\
+$X_6$ &amp; 5 &amp; 3 &amp; 1 &amp; 2 &amp; 1 &amp; 5 &amp; 1 &amp; 5 &amp; 5 &amp; 2 &amp; 5\\
+\enddata
+\end{table}
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Par      o1      o2      o3      o4      o5      o6      o7      o8      o9      o10     o11
+$X_1$    4       4       2       3       3       3       2       3       4       4       3
+$X_2$    3       1       3       4       4       1       3       2       1       3       2
+$X_3$    1       6       4       6       2       4       5       4       2       1       4
+$X_4$    2       2       6       5       6       6       4       6       3       5       1
+$X_5$    6       5       5       1       5       2       6       1       6       6       6
+$X_6$    5       3       1       2       1       5       1       5       5       2       5
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id21">
+<h2>Dynamic Identifiability Analysis (DYNIA)<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h2>
+<p>added soon</p>
+</div>
+<div class="section" id="id22">
+<h2>Regional Sensitivity Analysis (RSA)<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h2>
+<p>Extra info added soon</p>
+<div class="section" id="main-rsa-methods">
+<h3>Main RSA methods<a class="headerlink" href="#main-rsa-methods" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="generalised-likelihood-uncertainty-estimation-glue">
+<h2>Generalised Likelihood Uncertainty Estimation (GLUE)<a class="headerlink" href="#generalised-likelihood-uncertainty-estimation-glue" title="Permalink to this headline">¶</a></h2>
+<p>added soon</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sensitivity Analysis</a><ul>
+<li><a class="reference internal" href="#sensitivity-base-class">Sensitivity Base class</a><ul>
+<li><a class="reference internal" href="#interaction-with-models">Interaction with models</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#morris-screening-method">Morris Screening method</a><ul>
+<li><a class="reference internal" href="#main-morris-screening-methods">Main Morris screening methods</a></li>
+<li><a class="reference internal" href="#testing-the-selected-traject-optimization">Testing the selected traject optimization</a></li>
+<li><a class="reference internal" href="#output-plots-and-exports">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#standardized-regression-coefficients-src-method">Standardized Regression Coefficients (SRC) method</a><ul>
+<li><a class="reference internal" href="#main-src-methods">Main SRC methods</a></li>
+<li><a class="reference internal" href="#quick-analysis-of-the-scatter-plots-of-the-ouput-versus-the-parameter-values">Quick analysis of the scatter plots of the ouput versus the parameter values</a></li>
+<li><a class="reference internal" href="#id1">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sobol-variance-based-method">Sobol Variance based method</a><ul>
+<li><a class="reference internal" href="#main-sobol-variance-methods">Main Sobol variance methods</a></li>
+<li><a class="reference internal" href="#check-the-convergence-of-the-analysis">Check the convergence of the analysis</a></li>
+<li><a class="reference internal" href="#id2">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#latin-hypercube-oat-method">Latin-Hypercube OAT method</a><ul>
+<li><a class="reference internal" href="#main-global-oat-methods">Main GLobal OAT methods</a></li>
+<li><a class="reference internal" href="#id3">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dynamic-identifiability-analysis-dynia">Dynamic Identifiability Analysis (DYNIA)</a></li>
+<li><a class="reference internal" href="#regional-sensitivity-analysis-rsa">Regional Sensitivity Analysis (RSA)</a></li>
+<li><a class="reference internal" href="#id4">Sensitivity Base class</a><ul>
+<li><a class="reference internal" href="#id5">Interaction with models</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">Morris Screening method</a><ul>
+<li><a class="reference internal" href="#id7">Main Morris screening methods</a></li>
+<li><a class="reference internal" href="#id8">Testing the selected traject optimization</a></li>
+<li><a class="reference internal" href="#id9">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id10">Standardized Regression Coefficients (SRC) method</a><ul>
+<li><a class="reference internal" href="#id11">Main SRC methods</a></li>
+<li><a class="reference internal" href="#id12">Quick analysis of the scatter plots of the ouput versus the parameter values</a></li>
+<li><a class="reference internal" href="#id13">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id14">Sobol Variance based method</a><ul>
+<li><a class="reference internal" href="#id15">Main Sobol variance methods</a></li>
+<li><a class="reference internal" href="#id16">Check the convergence of the analysis</a></li>
+<li><a class="reference internal" href="#id17">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id18">Latin-Hypercube OAT method</a><ul>
+<li><a class="reference internal" href="#id19">Main GLobal OAT methods</a></li>
+<li><a class="reference internal" href="#id20">Output plots and exports</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id21">Dynamic Identifiability Analysis (DYNIA)</a></li>
+<li><a class="reference internal" href="#id22">Regional Sensitivity Analysis (RSA)</a><ul>
+<li><a class="reference internal" href="#main-rsa-methods">Main RSA methods</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#generalised-likelihood-uncertainty-estimation-glue">Generalised Likelihood Uncertainty Estimation (GLUE)</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parameter.html"
+                        title="previous chapter">Model Parameters</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/sensitivity.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, S. Van Hoey.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.3</a>
+      
+      |
+      <a href="_sources/sensitivity.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
+
+    
+
+    
+  </body>
+</html>
