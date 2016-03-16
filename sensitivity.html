@@ -1971,9 +1971,9 @@ $X_6$    5       3       1       2       1       5       1       5       5      
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>parsin</strong> : list</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>ParsIn</strong> : list</p>
 <blockquote>
-<div><p>either a list of (min,max,&#8217;name&#8217;) values,
+<div><p>either a list of (min,max,&#8217;name&#8217;) values, 
 [(min,max,&#8217;name&#8217;),(min,max,&#8217;name&#8217;),...(min,max,&#8217;name&#8217;)]
 or a list of ModPar instances</p>
 </div></blockquote>
@@ -1986,60 +1986,114 @@ or a list of ModPar instances</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>The method basically ranks/selects parameter sets based on a evaluation
+<p>The method basically ranks/selects parameter sets based on a evaluation 
 criterion and checks the marginal influence of the different parameters
-on this criterion. In literature, the method is known as Regional
+on this criterion. In literature, the method is known as Regional 
 Sensitivity Analysis (RSA, <a class="reference internal" href="#r1" id="id22">[R1]</a>), but also describe in <a class="reference internal" href="#r2" id="id23">[R2]</a> and referred
 to as Monte Carlo Filtering. Intially introduced by <a class="reference internal" href="#r1" id="id24">[R1]</a> with a split
 between behavioural and non-behavioural accombined with a Kolmogorov-
 smirnov rank test (necessary, but nof sufficient to determine insensitive),
 applied with ten-bins split of the behavioural by <a class="reference internal" href="#r3" id="id25">[R3]</a> and a ten bins
 split of the entire parameter range by <a class="reference internal" href="#r4" id="id26">[R4]</a>.</p>
-<p>The method is directly connected to the GLUE approach, using the
-behavioural simulation to define prediction limits of the model output.
+<p>The method is directly connected to the GLUE approach, using the 
+behavioural simulation to define prediction limits of the model output. 
 Therefore, this class is used as baseclass for the GLUE uncertainty.</p>
 <p class="rubric">References</p>
 <table class="docutils citation" frame="void" id="r1" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[R1]</td><td><em>(<a class="fn-backref" href="#id22">1</a>, <a class="fn-backref" href="#id24">2</a>)</em> Hornberger, G.M., and R.C. Spear. An Approach to the Preliminary
-Analysis of Environmental Systems. Journal of Environmental
+<tr><td class="label">[R1]</td><td><em>(<a class="fn-backref" href="#id22">1</a>, <a class="fn-backref" href="#id24">2</a>)</em> Hornberger, G.M., and R.C. Spear. An Approach to the Preliminary 
+Analysis of Environmental Systems. Journal of Environmental 
 Management 12 (1981): 7–18.</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="r2" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id23">[R2]</a></td><td>Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo,
-Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano
-Tarantola. Global Sensitivity Analysis, The Primer.
+<tr><td class="label"><a class="fn-backref" href="#id23">[R2]</a></td><td>Saltelli, Andrea, Marco Ratto, Terry Andres, Francesca Campolongo, 
+Jessica Cariboni, Debora Gatelli, Michaela Saisana, and Stefano 
+Tarantola. Global Sensitivity Analysis, The Primer. 
 John Wiley &amp; Sons Ltd, 2008.</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="r3" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id25">[R3]</a></td><td>Freer, Jim, Keith Beven, and Bruno Ambroise. Bayesian Estimation
-of Uncertainty in Runoff Prediction and the Value of Data: An
-Application of the GLUE Approach. Water Resources Research 32,
-no. 7 (1996): 2161.
+<tr><td class="label"><a class="fn-backref" href="#id25">[R3]</a></td><td>Freer, Jim, Keith Beven, and Bruno Ambroise. Bayesian Estimation 
+of Uncertainty in Runoff Prediction and the Value of Data: An 
+Application of the GLUE Approach. Water Resources Research 32, 
+no. 7 (1996): 2161. 
 <a class="reference external" href="http://www.agu.org/pubs/crossref/1996/95WR03723.shtml">http://www.agu.org/pubs/crossref/1996/95WR03723.shtml</a>.</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="r4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id26">[R4]</a></td><td>Wagener, Thorsten, D. P. Boyle, M. J. Lees, H. S. Wheater,
-H. V. Gupta, and S. Sorooshian. A Framework for Development and
-Application of Hydrological Models. Hydrology and Earth System
+<tr><td class="label"><a class="fn-backref" href="#id26">[R4]</a></td><td>Wagener, Thorsten, D. P. Boyle, M. J. Lees, H. S. Wheater, 
+H. V. Gupta, and S. Sorooshian. A Framework for Development and 
+Application of Hydrological Models. Hydrology and Earth System 
 Sciences 5, no. 1 (2001): 13–26.</td></tr>
 </tbody>
 </table>
 <dl class="method">
+<dt id="pystran.RegionalSensitivity.PrepareSample">
+<code class="descname">PrepareSample</code><span class="sig-paren">(</span><em>nbaseruns</em>, <em>seedin=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_rsa.html#RegionalSensitivity.PrepareSample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.RegionalSensitivity.PrepareSample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sampling of the parameter space. No specific sampling preprocessing
+procedure is needed, only a general Monte Carlo sampling of the 
+parameter space is expected. To improve the sampling procedure, 
+Latin Hypercube or Sobol pseudo-random sampling can be preferred. The 
+latter is used in the pySTAN framework, but using the ModPar class
+individually enables Latin Hypercube and random sampling.</p>
+<p>Currently only uniform distributions are supported by the framework,
+but the Modpar class enables other dsitributions to sample the 
+parameter space and bypassing the sampling here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nbaseruns</strong> : int</p>
+<blockquote>
+<div><p>number of samples to take for the analysis; highly dependent from
+the total number of input factors. range of 10000s is minimum.</p>
+</div></blockquote>
+<p><strong>seedin</strong> : int</p>
+<blockquote>
+<div><p>seed to start the Sobol sampling from. This enables to increase
+the sampling later on, by starting from the previous seedout.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>seed_out</strong> : int</p>
+<blockquote>
+<div><p>the last seed, useful for later use</p>
+</div></blockquote>
+<p><strong>parset2run</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>parameters to run the model (nbaseruns x ndim)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li>Do the Sobol sampling always for the entire parameter space at the</li>
+</ul>
+<p>same time, for LH this doesn&#8217;t matter
+* Never extend the sampling size with using the same seed, since this
+generates duplicates of the samples</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystran.RegionalSensitivity.checkprobs">
+<code class="descname">checkprobs</code><span class="sig-paren">(</span><em>arrtocheck</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_rsa.html#RegionalSensitivity.checkprobs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.RegionalSensitivity.checkprobs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="pystran.RegionalSensitivity.select_behavioural">
 <code class="descname">select_behavioural</code><span class="sig-paren">(</span><em>output</em>, <em>method='treshold'</em>, <em>threshold=0.0</em>, <em>percBest=0.2</em>, <em>norm=True</em>, <em>mask=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pystran/sensitivity_rsa.html#RegionalSensitivity.select_behavioural"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pystran.RegionalSensitivity.select_behavioural" title="Permalink to this definition">¶</a></dt>
-<dd><p>Select bevahvioural parameter sets, based on output evaluation
-criterion used.
+<dd><p>Select bevahvioural parameter sets, based on output evaluation 
+criterion used. 
 w
 The algorithm makes only a &#8216;mask&#8217; for further operation, in order to
 avoid memory overload by copying matrices</p>
