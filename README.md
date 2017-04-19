@@ -1,4 +1,7 @@
 # pystran
+
+*no longer maintained*
+
 Toolset of dynamical model STRucture ANalysis algorithms
 
 ## Remark
